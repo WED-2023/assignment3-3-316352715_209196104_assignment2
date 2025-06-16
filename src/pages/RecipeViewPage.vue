@@ -1,126 +1,52 @@
 <template>
-    <div class="container">
-      <div v-if="recipe">
-        <div class="recipe-header mt-3 mb-4">
-          <h1>{{ recipe.title }}</h1>
-          <img :src="recipe.image" class="center" />
-        </div>
-        <div class="recipe-body">
-          <div class="wrapper">
-            <div class="wrapped">
-              <div class="mb-3">
-                <div>Ready in {{ recipe.readyInMinutes }} minutes</div>
-                <div>Likes: {{ recipe.aggregateLikes }} likes</div>
-              </div>
-              Ingredients:
-              <ul>
-                <li
-                  v-for="(r, index) in recipe.extendedIngredients"
-                  :key="index + '_' + r.id"
-                >
-                  {{ r.original }}
-                </li>
-              </ul>
-            </div>
-            <div class="wrapped">
-              Instructions:
-              <ol>
-                <li v-for="s in recipe._instructions" :key="s.number">
-                  {{ s.step }}
-                </li>
-              </ol>
-            </div>
-          </div>
-        </div>
-        <!-- <pre>
-        {{ $route.params }}
-        {{ recipe }}
-      </pre
-        > -->
-      </div>
+  <div class="card h-100 hover-shadow recipe-card" @click="goToRecipe">
+    <img
+      v-if="recipe.img"
+      :src="recipe.img"
+      class="card-img-top recipe-image"
+      alt="Recipe image"
+    />
+    <div class="card-body text-center">
+      <h5 class="card-title">{{ recipe.name }}</h5>
+      <p class="card-text">{{ recipe.time }} minutes</p>
+      <p class="card-text">{{ recipe.popularity }} likes</p>
     </div>
-  </template>
-  
-  <script>
-  export default {
-    data() {
-      return {
-        recipe: null
-      };
-    },
-    async created() {
-      try {
-        let response;
-        // response = this.$route.params.response;
-  
-        try {
-          response = await this.axios.get(
-            // "https://test-for-3-2.herokuapp.com/recipes/info",
-            this.$root.store.server_domain + "/recipes/info",
-            {
-              params: { id: this.$route.params.recipeId }
-            }
-          );
-  
-          // console.log("response.status", response.status);
-          if (response.status !== 200) this.$router.replace("/NotFound");
-        } catch (error) {
-          console.log("error.response.status", error.response.status);
-          this.$router.replace("/NotFound");
-          return;
-        }
-  
-        let {
-          analyzedInstructions,
-          instructions,
-          extendedIngredients,
-          aggregateLikes,
-          readyInMinutes,
-          image,
-          title
-        } = response.data.recipe;
-  
-        let _instructions = analyzedInstructions
-          .map((fstep) => {
-            fstep.steps[0].step = fstep.name + fstep.steps[0].step;
-            return fstep.steps;
-          })
-          .reduce((a, b) => [...a, ...b], []);
-  
-        let _recipe = {
-          instructions,
-          _instructions,
-          analyzedInstructions,
-          extendedIngredients,
-          aggregateLikes,
-          readyInMinutes,
-          image,
-          title
-        };
-  
-        this.recipe = _recipe;
-      } catch (error) {
-        console.log(error);
-      }
+  </div>
+</template>
+
+<script>
+export default {
+  name: "RecipePreview",
+  props: {
+    recipe: {
+      type: Object,
+      required: true
     }
-  };
-  </script>
-  
-  <style scoped>
-  .wrapper {
-    display: flex;
+  },
+  methods: {
+    goToRecipe() {
+      this.$router.push({ name: 'recipe', params: { recipeId: this.recipe.recipe_id } });
+    }
   }
-  .wrapped {
-    width: 50%;
-  }
-  .center {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    width: 50%;
-  }
-  /* .recipe-header{
-  
-  } */
-  </style>
-  
+};
+</script>
+
+<style>
+.recipe-card {
+  cursor: pointer;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  border-radius: 10px;
+}
+.recipe-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transform: scale(1.02);
+}
+.recipe-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+</style>
+
