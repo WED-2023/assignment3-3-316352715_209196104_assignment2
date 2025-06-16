@@ -2,7 +2,11 @@
   <div class="container">
     <h1 class="title">Main Page</h1>
 
-    <RecipePreviewList title="Random Recipes" class="RandomRecipes center" />
+    <RecipePreviewList
+      title="Random Recipes"
+      class="RandomRecipes center"
+      :recipes="randomRecipes"
+    />
 
     <div v-if="!store.username" class="text-center mt-4">
       <router-link :to="{ name: 'login' }">
@@ -23,7 +27,8 @@
 </template>
 
 <script>
-import { getCurrentInstance } from 'vue';
+import { getCurrentInstance, ref, onMounted } from 'vue';
+import axios from 'axios';
 import RecipePreviewList from "../components/RecipePreviewList.vue";
 
 export default {
@@ -34,7 +39,19 @@ export default {
     const internalInstance = getCurrentInstance();
     const store = internalInstance.appContext.config.globalProperties.store;
 
-    return { store };
+    const randomRecipes = ref([]);
+
+    onMounted(() => {
+      axios.get('/recipes/random')
+        .then(response => {
+          randomRecipes.value = response.data;
+        })
+        .catch(error => {
+          console.error("Failed to fetch random recipes:", error);
+        });
+    });
+
+    return { store, randomRecipes };
   }
 };
 </script>
@@ -44,7 +61,7 @@ export default {
   margin: 10px 0 10px;
 }
 .blur {
-  -webkit-filter: blur(5px); /* Safari 6.0 - 9.0 */
+  -webkit-filter: blur(5px);
   filter: blur(2px);
 }
 ::v-deep .blur .recipe-preview {
