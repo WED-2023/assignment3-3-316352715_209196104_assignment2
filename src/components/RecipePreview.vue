@@ -27,9 +27,12 @@ export default {
   },
   methods: {
     goToRecipe() {
+      const id = this.recipe.recipe_id || this.recipe.id;
+      console.log("recipeId:", id);
+
       this.$router.push({
         name: "recipe",
-        params: { recipeId: this.recipe.recipe_id }
+        params: { recipeId: id }
       });
     }
   }

@@ -23,9 +23,9 @@ const routes = [
     component: () => import("../pages/SearchPage.vue"),
   },
   {
-    path: "/recipe/:recipeId",
+    path: "/recipes/:recipeId",
     name: "recipe",
-    component: () => import("../pages/RecipeViewPage.vue"),
+    component: () => import("@/pages/RecipeViewPage.vue"),
   },
   {
     path: "/:catchAll(.*)",
@@ -37,7 +37,7 @@ const routes = [
     name: 'family-recipes',
     component: () => import('@/pages/FamilyRecipesPage.vue')
   }
-  
+
 ];
 
 
