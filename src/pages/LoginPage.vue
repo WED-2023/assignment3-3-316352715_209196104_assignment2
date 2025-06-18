@@ -13,17 +13,22 @@
         </div>
       </div>
 
-      <div class="form-group">
+      <div class="form-group password-wrapper">
         <input
           v-model="state.password"
-          type="password"
+          :type="showPassword ? 'text' : 'password'"
           placeholder="סיסמה"
           class="form-input"
         />
+        <div
+          :class="['toggle-password-icon', showPassword ? 'eye-slash' : 'eye']"
+          @click="showPassword = !showPassword"
+        ></div>
         <div v-if="v$.password.$error" class="text-danger">
-          יש להזין סיסמה
-                </div>
+          <span v-if="v$.password.$errors.find(e => e.$validator === 'required')">שדה חובה</span>
+        </div>
       </div>
+
 
       <button type="submit" class="form-button mt-2">התחבר</button>
     </form>
@@ -31,7 +36,7 @@
 </template>
 
 <script>
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required, minLength } from '@vuelidate/validators';
 import FormWrapper from "@/components/FormWrapper.vue";
@@ -40,6 +45,7 @@ export default {
   name: "LoginPage",
   components: { FormWrapper },
   setup(_, { expose }) {
+    const showPassword = ref(false);
     const state = reactive({
       username: '',
       password: '',
@@ -69,7 +75,7 @@ export default {
 
     expose({ login });
 
-    return { state, v$, login };
+    return { state, v$, login, showPassword};
   }
 };
 </script>
@@ -107,5 +113,72 @@ export default {
   margin-top: -0.5rem;
   margin-bottom: 0.75rem;
   text-align: right;
+}
+
+
+.password-wrapper {
+  position: relative;
+}
+
+.toggle-password-icon {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  transition: opacity 0.2s;
+}
+
+.toggle-password-icon:hover {
+  opacity: 0.7;
+}
+
+/* Eye icon - open eye (improved design) */
+.eye::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 12px;
+  border: 2px solid #666;
+  border-radius: 18px 18px 18px 18px;
+  top: 4px;
+  left: 1px;
+}
+
+.eye::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #666;
+  border-radius: 50%;
+  top: 6px;
+  left: 6px;
+}
+
+/* Eye-slash icon - closed eye */
+.eye-slash::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 12px;
+  border: 2px solid #999;
+  border-radius: 18px 18px 18px 18px;
+  top: 4px;
+  left: 1px;
+  opacity: 0.6;
+}
+
+.eye-slash::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 2px;
+  background-color: #666;
+  top: 9px;
+  left: 0px;
+  transform: rotate(-45deg);
 }
 </style>
