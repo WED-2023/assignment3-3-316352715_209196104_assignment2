@@ -23,6 +23,7 @@ const app = createApp(App);
 app.use(router);
 app.use(VueAxios, axios);
 axios.defaults.baseURL = 'https://wtfood.cs.bgu.ac.il';
+axios.defaults.withCredentials = true;
 
 app.config.globalProperties.store = store;
 
