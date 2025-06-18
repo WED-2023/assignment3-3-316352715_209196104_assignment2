@@ -4,6 +4,9 @@ import routes from './router/index';
 import axios from 'axios';
 import VueAxios from 'vue-axios';
 import { createRouter, createWebHistory } from 'vue-router';
+import "@fortawesome/fontawesome-free/css/all.css";
+import "@fortawesome/fontawesome-free/js/all.js";
+
 
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/js/bootstrap.bundle.js';
