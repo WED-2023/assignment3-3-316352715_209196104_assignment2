@@ -1,148 +1,173 @@
 <template>
   <FormWrapper title="Login">
-    <form @submit.prevent="login">
-      <div class="form-group">
-        <input
-          v-model="state.username"
-          type="text"
-          placeholder="שם משתמש"
-          class="form-input"
-        />
-        <div v-if="v$.username.$dirty && v$.username.$error" class="text-danger">
-          יש להזין שם משתמש
+    <template v-if="checkedLogin">
+      <form v-if="!isLoggedIn" @submit.prevent="login">
+        <div class="form-group">
+          <input
+            v-model="state.username"
+            type="text"
+            placeholder="שם משתמש"
+            class="form-input"
+          />
+          <div v-if="v$.username.$dirty && v$.username.$error" class="text-danger">
+            יש להזין שם משתמש
+          </div>
         </div>
-      </div>
 
-      <div class="form-group password-wrapper">
-        <input
-          v-model="state.password"
-          :type="showPassword ? 'text' : 'password'"
-          placeholder="סיסמה"
-          class="form-input"
-        />
-        <div
-          :class="['toggle-password-icon', showPassword ? 'eye-slash' : 'eye']"
-          @click="showPassword = !showPassword"
-        ></div>
-        <div v-if="v$.password.$dirty && v$.password.$error" class="text-danger">
-          
-          <span v-if="v$.password.$errors.find(e => e.$validator === 'required')">שדה חובה</span>
-          <span v-if="v$.password.$errors.find(e => e.$validator === 'minLength')">
-            סיסמה חייבת להכיל לפחות 6 תווים
-          </span>
-
+        <div class="form-group password-wrapper">
+          <input
+            v-model="state.password"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="סיסמה"
+            class="form-input"
+          />
+          <div
+            :class="['toggle-password-icon', showPassword ? 'eye-slash' : 'eye']"
+            @click="showPassword = !showPassword"
+          ></div>
+          <div v-if="v$.password.$dirty && v$.password.$error" class="text-danger">
+            <span v-if="v$.password.$errors.find(e => e.$validator === 'required')">שדה חובה</span>
+            <span v-if="v$.password.$errors.find(e => e.$validator === 'minLength')">
+              סיסמה חייבת להכיל לפחות 6 תווים
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div v-if="serverError" class="text-danger">
-        {{ serverError }}
+        <div v-if="alreadyLoggedInMessage" class="text-info">
+          {{ alreadyLoggedInMessage }}
+        </div>
+
+        <button type="submit" class="form-button mt-2">התחבר</button>
+
+        <div v-if="loginSuccess" class="text-success" style="margin-top:0.5rem;">
+          התחברת בהצלחה!
+        </div>
+        <div v-if="loginFailed" class="text-danger" style="margin-top:0.5rem;">
+          ⚠️ {{ serverError || 'התחברות נכשלה. נסה שוב.' }}
+        </div>
+      </form>
+
+      <div v-else class="already-logged-in-message">
+        {{ alreadyLoggedInMessage || 'כבר התחברת למערכת' }}
       </div>
-      <div v-if="alreadyLoggedInMessage" class="text-info">
-  {{ alreadyLoggedInMessage }}
-</div>
-      <button type="submit" class="form-button mt-2">התחבר</button>
-    </form>
+    </template>
   </FormWrapper>
 </template>
+
 <script>
-import { reactive, ref, onMounted,getCurrentInstance, watch} from 'vue';
+import { reactive, ref, onMounted, getCurrentInstance, watch } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required, minLength } from '@vuelidate/validators';
 import FormWrapper from "@/components/FormWrapper.vue";
 import { useRouter } from 'vue-router';
-
 
 export default {
   name: "LoginPage",
   components: { FormWrapper },
   setup(_, { expose }) {
     const { proxy } = getCurrentInstance();
+    const router = useRouter();
+
     const state = reactive({
       username: '',
       password: '',
     });
-    const serverError = ref('');
-    const showPassword = ref(false);
-    const router = useRouter();
-    const alreadyLoggedInMessage = ref('');
 
+    const v$ = useVuelidate({
+      username: { required },
+      password: { required, minLength: minLength(6) },
+    }, state);
+
+    const showPassword = ref(false);
+    const serverError = ref('');
+    const alreadyLoggedInMessage = ref('');
+    const loginSuccess = ref(false);
+    const loginFailed = ref(false);
+    const isLoggedIn = ref(false);
+    const checkedLogin = ref(false); // ✅ חדש – כדי למנוע טעינה מוקדמת של הטופס
 
     watch(() => state.username, () => serverError.value = '');
     watch(() => state.password, () => serverError.value = '');
 
+    const login = async () => {
+      v$.value.$touch();
+      serverError.value = '';
 
+      if (await v$.value.$validate()) {
+        try {
+          const response = await proxy.axios.post('/auth/login', {
+            username: state.username,
+            password: state.password
+          });
 
-    const rules = {
-      username: { required },
-      password: { required, minLength: minLength(6) },
+          if (response.status === 200) {
+            if (window?.store?.login)
+              window.store.login(state.username);
+
+            loginSuccess.value = true;
+            setTimeout(() => router.push('/'), 1500);
+          } else {
+            serverError.value = `התחברות נכשלה – סטטוס לא צפוי (${response.status})`;
+            loginFailed.value = true;
+            setTimeout(() => loginFailed.value = false, 3000);
+          }
+
+        } catch (err) {
+          loginSuccess.value = false;
+          const status = err.response?.status;
+          const backendMessage = (err.response?.data?.message || '').toLowerCase();
+
+          if (status === 401) {
+            serverError.value = 'שם המשתמש או הסיסמה שגויים';
+          } else if (status === 500) {
+            serverError.value = 'שגיאת שרת – נסה שוב מאוחר יותר';
+          } else if (backendMessage) {
+            serverError.value = backendMessage;
+          } else {
+            serverError.value = `שגיאה לא ידועה (${status || '??'})`;
+          }
+
+          loginFailed.value = true;
+          setTimeout(() => loginFailed.value = false, 3000);
+        }
+      }
     };
 
-    const v$ = useVuelidate(rules, state);
-
-  const login = async () => {
-  v$.value.$touch();
-  serverError.value = '';
-
-  if (await v$.value.$validate()) {
-    try {
-      const response = await proxy.axios.post('/auth/login', {
-        username: state.username,
-        password: state.password
-      });
-
-      if (response.status === 200) {
-        if (window?.store?.login) 
-          window.store.login(state.username);
-        router.push('/');
-
-      } else {
-        serverError.value = `התחברות נכשלה – סטטוס לא צפוי (${response.status})`;
+    onMounted(async () => {
+      try {
+        const res = await proxy.axios.get('/user/me');
+        if (res.status === 200 && res.data?.username) {
+          isLoggedIn.value = true;
+          alreadyLoggedInMessage.value = `כבר התחברת בתור ${res.data.username}`;
+          if (window?.store?.login) {
+            window.store.login(res.data.username);
+          }
+          setTimeout(() => router.push('/'), 2000);
+        }
+      } catch (err) {
+        console.debug("User is not logged in yet");
+      } finally {
+        checkedLogin.value = true; // ✅ טוען את התוכן רק לאחר הבדיקה
       }
-
-    } catch (err) {
-      const status = err.response?.status;
-      const backendMessage = (err.response?.data?.message || '').toLowerCase();
-
-      if (status === 401) {
-        serverError.value = 'שם המשתמש או הסיסמה שגויים';
-      } else if (status === 500) {
-        serverError.value = 'שגיאת שרת – נסה שוב מאוחר יותר';
-      } else if (backendMessage) {
-        serverError.value = backendMessage;
-      } else {
-        serverError.value = `שגיאה לא ידועה (${status || '??'})`;
-      }
-    }
-  }
-};
-
-      onMounted(async () => {
-  try {
-    const res = await proxy.axios.get('/users/me');
-    if (res.status === 200 && res.data?.username) {
-      alreadyLoggedInMessage.value = `כבר התחברת בתור ${res.data.username}`;
-      if (window?.store?.login) {
-        window.store.login(res.data.username);
-      }
-      setTimeout(() => {
-        router.push('/');
-      }, 2000); 
-    }
-  } catch (err) {
-    console.debug("User is not logged in yet");
-  }
-});
-
-
+    });
 
     expose({ login });
 
-
-    return { state, v$, login, showPassword,serverError,alreadyLoggedInMessage };
+    return {
+      state,
+      v$,
+      login,
+      showPassword,
+      serverError,
+      alreadyLoggedInMessage,
+      loginSuccess,
+      loginFailed,
+      isLoggedIn,
+      checkedLogin,
+    };
   }
 };
 </script>
-
 
 <style scoped>
 .form-input {
@@ -251,5 +276,35 @@ export default {
   margin-bottom: 0.75rem;
   text-align: right;
 }
+
+.text-success {
+  color: #28a745;
+  font-size: 0.9rem;
+  text-align: center;
+  
+}
+
+.text-fail {
+  color: red;
+  font-size: 0.9rem;
+  text-align: center;
+  
+}
+
+.already-logged-in-message {
+  text-align: center;
+  color: #28a745;
+  font-size: 1rem;
+  margin-top: 2rem;
+  background-color: #e6f9ed;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #b4e0cb;
+}
+
+
+
+
+
 
 </style>

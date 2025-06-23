@@ -1,26 +1,17 @@
 import { createApp } from 'vue';
 import App from './App.vue';
-import routes from './router/index';
+import router from './router'; // ← שים לב: זה router, לא routes
 import axios from 'axios';
 import VueAxios from 'vue-axios';
-import { createRouter, createWebHistory } from 'vue-router';
 import "@fortawesome/fontawesome-free/css/all.css";
 import "@fortawesome/fontawesome-free/js/all.js";
-
-
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/js/bootstrap.bundle.js';
-
 import store from './store';
-
-const router = createRouter({
-  history: createWebHistory(),
-  routes
-});
 
 const app = createApp(App);
 
-app.use(router);
+app.use(router); // ← לא ליצור createRouter שוב – אתה כבר מייבא אותו מ־router/index.js
 app.use(VueAxios, axios);
 axios.defaults.baseURL = 'https://wtfood.cs.bgu.ac.il';
 axios.defaults.withCredentials = true;
