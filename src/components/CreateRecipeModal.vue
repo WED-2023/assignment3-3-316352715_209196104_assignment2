@@ -92,7 +92,7 @@ export default {
     },
     async submitRecipe() {
       try {
-        await this.axios.post('/recipes', this.recipe);
+        await this.axios.post('/recipes', this.recipe , {withCredentials: true});
         this.$emit('created');
         this.$emit('update:show', false);
       } catch (err) {
