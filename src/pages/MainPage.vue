@@ -1,39 +1,35 @@
 <template>
-  <div class="container">
-    <h1 class="title">Main Page</h1>
-
-    <RecipePreviewList
-      title="Random Recipes"
-      class="RandomRecipes center"
-      :recipes="randomRecipes"
-    />
-
-    <div v-if="!store.username" class="text-center mt-4">
-      <router-link :to="{ name: 'login' }">
-        <button class="btn btn-primary">You need to Login to view this</button>
-      </router-link>
+  <div class="main-container">
+    <div class="left-column">
+      <h2 class="section-title">Explore These Recipes</h2>
+      <div class="recipe-list">
+        <RecipePreview
+          v-for="recipe in randomRecipes"
+          :key="recipe.recipe_id || recipe.id"
+          :recipe="recipe"
+        />
+      </div>
+      <button class="more-button" @click="loadMoreRecipes">More</button>
     </div>
 
-    <RecipePreviewList
-      title="Last Viewed Recipes"
-      :class="{
-        RandomRecipes: true,
-        blur: !store.username,
-        center: true
-      }"
-      disabled
-    />
+    <div class="right-column">
+      <component :is="store.username ? 'LastViewed' : 'LoginPage'" />
+    </div>
   </div>
 </template>
 
 <script>
 import { getCurrentInstance, ref, onMounted } from 'vue';
 import axios from 'axios';
-import RecipePreviewList from "../components/RecipePreviewList.vue";
+import RecipePreview from '@/components/RecipePreview.vue';
+import LoginPage from '@/pages/LoginPage.vue';
+import LastViewed from '@/components/LastViewed.vue'; 
 
 export default {
   components: {
-    RecipePreviewList
+    RecipePreview,
+    LoginPage,
+    LastViewed
   },
   setup() {
     const internalInstance = getCurrentInstance();
@@ -41,31 +37,84 @@ export default {
 
     const randomRecipes = ref([]);
 
-    onMounted(() => {
-      axios.get('/recipes/random')
-        .then(response => {
-          randomRecipes.value = response.data;
-        })
-        .catch(error => {
-          console.error("Failed to fetch random recipes:", error);
-        });
-    });
+    const fetchRecipes = async () => {
+      try {
+        const response = await axios.get('/recipes/random');
+        randomRecipes.value = response.data;
+      } catch (err) {
+        console.error("Failed to fetch random recipes:", err);
+      }
+    };
 
-    return { store, randomRecipes };
+    onMounted(fetchRecipes);
+
+    const loadMoreRecipes = () => {
+      fetchRecipes();
+    };
+
+    return { randomRecipes, store, loadMoreRecipes };
   }
 };
 </script>
 
-<style lang="scss" scoped>
-.RandomRecipes {
-  margin: 10px 0 10px;
+<style scoped>
+.main-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 2rem;
 }
-.blur {
-  -webkit-filter: blur(5px);
-  filter: blur(2px);
+
+.left-column {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-::v-deep .blur .recipe-preview {
-  pointer-events: none;
-  cursor: default;
+
+.right-column {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.recipe-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.section-title {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.more-button {
+  margin-top: 1.5rem;
+  padding: 0.5rem 1.5rem;
+  background-color: #3b82f6;
+  border: none;
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.more-button:hover {
+  background-color: #2563eb;
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .right-column {
+    margin-top: 2rem;
+  }
 }
 </style>
