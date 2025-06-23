@@ -29,12 +29,12 @@ export default {
     },
     sortBy: {
       type: String,
-      default: "popularity" // או 'time'
+      default: "popularity" 
     }
   },
   computed: {
     sortedRecipes() {
-      if (this.sortBy === "time") {
+      if (this.sortBy === "readyInMinutes") {
         return [...this.recipes].sort((a, b) => a.readyInMinutes - b.readyInMinutes);
       }
       // default: sort by popularity

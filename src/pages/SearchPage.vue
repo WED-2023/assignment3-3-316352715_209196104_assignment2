@@ -25,7 +25,6 @@
             <option value="italian">איטלקי</option>
             <option value="mexican">מקסיקני</option>
             <option value="chinese">סיני</option>
-            <!-- אפשר להוסיף עוד -->
           </select>
         </div>
 
@@ -54,7 +53,12 @@
       </div>
     </form>
 
-    <RecipePreviewList v-if="results.length" :recipes="results" title="תוצאות חיפוש" />
+    <RecipePreviewList
+      v-if="results.length"
+      :recipes="results"
+      :sort-by="sort"
+      title="תוצאות חיפוש"
+    />
     <div v-else-if="hasSearched" class="text-center text-muted mt-5">
       <p>לא נמצאו תוצאות.</p>
     </div>
@@ -82,12 +86,16 @@ export default {
     async search() {
       try {
         const params = {
-          query: this.query,
-          number: this.number,
+          name: this.query,
+          limit: this.number,
           cuisine: this.cuisine,
           diet: this.diet,
-          sort: this.sort
+          sortBy: this.sort === 'time' ? undefined : this.sort,
+          order: 'desc'
+
         };
+        console.log('Search params:', params);
+        this.results = [];
         const { data } = await this.axios.get('/recipes/', { params });
         this.results = data;
         this.hasSearched = true;

@@ -15,7 +15,7 @@
       </div>
       <div class="col-md-6">
         <h5>Instructions</h5>
-        <p>{{ recipe.instructions }}</p>
+        <div v-html="recipe.instructions"></div>
       </div>
     </div>
     <div class="mt-4">
