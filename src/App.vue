@@ -3,9 +3,11 @@
     <div id="nav">
       <router-link :to="{ name: 'main' }">Vue Recipes</router-link> |
       <router-link :to="{ name: 'search' }">Search</router-link> |
-      <router-link :to="{name: 'family-recipes'}">Family Recipes</router-link>
-      <span v-if="!store.username">
-        Guest:
+      <router-link :to="{name: 'family-recipes'}">Family Recipes</router-link> | 
+      <router-link :to="{name: 'create-recipe'}">Add a recipe</router-link> | 
+      
+      <span v-if="!store?.username">
+          Guest:
         <router-link :to="{ name: 'register' }">Register</router-link> |
         <router-link :to="{ name: 'login' }">Login</router-link> |
       </span>
@@ -19,7 +21,7 @@
 </template>
 
 <script>
-import { getCurrentInstance } from 'vue';
+import { getCurrentInstance, computed } from 'vue';
 
 export default {
   name: "App",
@@ -35,10 +37,13 @@ export default {
       router.push("/").catch(() => {});
     };
 
-    return { store, logout };
+    const username = computed(() => store?.username);
+
+    return { store, username, logout }; 
   }
 }
 </script>
+
 
 <style lang="scss">
 @import "@/scss/form-style.scss";

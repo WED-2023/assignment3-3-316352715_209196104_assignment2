@@ -1,3 +1,4 @@
+
 import { createApp } from 'vue';
 import App from './App.vue';
 import routes from './router/index';
@@ -9,7 +10,9 @@ import "@fortawesome/fontawesome-free/js/all.js";
 
 
 import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap-vue-3/dist/bootstrap-vue-3.css';
 import 'bootstrap/dist/js/bootstrap.bundle.js';
+import BootstrapVue3 from 'bootstrap-vue-3'
 
 import store from './store';
 
@@ -22,6 +25,9 @@ const app = createApp(App);
 
 app.use(router);
 app.use(VueAxios, axios);
+app.use(BootstrapVue3);
+
+
 axios.defaults.baseURL = 'https://wtfood.cs.bgu.ac.il';
 
 app.config.globalProperties.store = store;
