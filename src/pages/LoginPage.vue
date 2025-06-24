@@ -101,9 +101,7 @@ export default {
           });
 
           if (response.status === 200) {
-            if (window?.store?.login)
-              window.store.login(state.username);
-
+            proxy.store.login(state.username);
             loginSuccess.value = true;
             setTimeout(() => router.push('/'), 1500);
           } else {
@@ -132,24 +130,23 @@ export default {
         }
       }
     };
+onMounted(async () => {
+  try {
+    const res = await proxy.axios.get('/user/me');
+    if (res.status === 200 && res.data?.username) {
+      isLoggedIn.value = true;
+      alreadyLoggedInMessage.value = `כבר התחברת בתור ${res.data.username}`;
 
-    onMounted(async () => {
-      try {
-        const res = await proxy.axios.get('/user/me');
-        if (res.status === 200 && res.data?.username) {
-          isLoggedIn.value = true;
-          alreadyLoggedInMessage.value = `כבר התחברת בתור ${res.data.username}`;
-          if (window?.store?.login) {
-            window.store.login(res.data.username);
-          }
-          setTimeout(() => router.push('/'), 2000);
-        }
-      } catch (err) {
-        console.debug("User is not logged in yet");
-      } finally {
-        checkedLogin.value = true; // ✅ טוען את התוכן רק לאחר הבדיקה
-      }
-    });
+      proxy.store.login(res.data.username);
+      setTimeout(() => router.push('/'), 2000);
+    }
+  } catch (err) {
+    console.debug("User is not logged in yet");
+  } finally {
+    checkedLogin.value = true;
+  }
+});
+
 
     expose({ login });
 
