@@ -8,6 +8,7 @@ const routes = [
   { path: "/register", name: "register", component: () => import("../pages/RegisterPage.vue") },
   { path: "/login", name: "login", component: () => import("../pages/LoginPage.vue") },
   { path: "/search", name: "search", component: () => import("../pages/SearchPage.vue") },
+  { path: "/about", name: "about",   component: () => import('../pages/AboutPage.vue') },
   { path: "/recipes/:recipeId", name: "recipe", component: () => import("@/pages/RecipeViewPage.vue") },
   { path: "/:catchAll(.*)", name: "notFound", component: NotFound },
   { path: '/recipes/family-recipes', name: 'family-recipes', component: () => import('@/pages/FamilyRecipesPage.vue') },

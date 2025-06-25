@@ -14,6 +14,8 @@ import 'bootstrap/dist/js/bootstrap.bundle.js';
 import BootstrapVue3 from 'bootstrap-vue-3';
 
 import store from './store';
+import "@/scss/main.scss";
+
 
 const app = createApp(App);
 

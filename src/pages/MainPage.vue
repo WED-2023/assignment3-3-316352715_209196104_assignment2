@@ -9,7 +9,7 @@
           :recipe="recipe"
         />
       </div>
-      <button class="more-button" @click="loadMoreRecipes">More</button>
+      <BaseButton type="more" @click="loadMoreRecipes">Show Other Recipes</BaseButton>
     </div>
 
     <div class="right-column">
@@ -24,9 +24,11 @@ import axios from 'axios';
 import RecipePreview from '@/components/RecipePreview.vue';
 import LoginPage from '@/pages/LoginPage.vue';
 import LastViewed from '@/components/LastViewed.vue'; 
+import BaseButton from '@/components/BaseButton.vue';
 
 export default {
   components: {
+    BaseButton,
     RecipePreview,
     LoginPage,
     LastViewed
@@ -92,20 +94,6 @@ export default {
   margin-bottom: 1rem;
 }
 
-.more-button {
-  margin-top: 1.5rem;
-  padding: 0.5rem 1.5rem;
-  background-color: #3b82f6;
-  border: none;
-  color: white;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.more-button:hover {
-  background-color: #2563eb;
-}
 
 @media (max-width: 768px) {
   .main-container {

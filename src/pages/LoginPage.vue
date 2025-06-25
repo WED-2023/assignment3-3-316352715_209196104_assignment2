@@ -37,7 +37,7 @@
           {{ alreadyLoggedInMessage }}
         </div>
 
-        <button type="submit" class="form-button mt-2">התחבר</button>
+        <BaseButton type="login" htmlType="submit" class="mt-2">התחבר</BaseButton>
 
         <div v-if="loginSuccess" class="text-success" style="margin-top:0.5rem;">
           התחברת בהצלחה!
@@ -60,10 +60,12 @@ import { useVuelidate } from '@vuelidate/core';
 import { required, minLength } from '@vuelidate/validators';
 import FormWrapper from "@/components/FormWrapper.vue";
 import { useRouter } from 'vue-router';
+import BaseButton from "@/components/BaseButton.vue";
+
 
 export default {
   name: "LoginPage",
-  components: { FormWrapper },
+  components: { FormWrapper, BaseButton },
   setup(_, { expose }) {
     const { proxy } = getCurrentInstance();
     const router = useRouter();
@@ -160,7 +162,7 @@ onMounted(async () => {
       loginSuccess,
       loginFailed,
       isLoggedIn,
-      checkedLogin,
+      checkedLogin
     };
   }
 };
@@ -175,22 +177,6 @@ onMounted(async () => {
   border-radius: 8px;
   font-size: 16px;
   box-sizing: border-box;
-}
-
-.form-button {
-  width: 100%;
-  background-color: #e76f51;
-  color: white;
-  border: none;
-  padding: 0.75rem;
-  font-size: 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.form-button:hover {
-  background-color: #d3583c;
 }
 
 .text-danger {
