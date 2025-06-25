@@ -49,6 +49,7 @@ const routes = [
 
 ];
 
+console.log("Routes: ", routes);
 
 const router = createRouter({
     history: createWebHistory(), 

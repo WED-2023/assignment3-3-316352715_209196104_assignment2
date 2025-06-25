@@ -13,7 +13,13 @@
     </div>
 
     <div class="right-column">
-      <component :is="store.username ? 'LastViewed' : 'LoginPage'" />
+      <div v-if="store.username">
+        <LastViewed />
+        <button class="logout-button" @click="logout">התנתק</button>
+      </div>
+      <div v-else-if="checkedLogin">
+        <LoginPage />
+      </div>
     </div>
   </div>
 </template>
@@ -36,6 +42,17 @@ export default {
     const store = internalInstance.appContext.config.globalProperties.store;
 
     const randomRecipes = ref([]);
+    const checkedLogin = ref(false); // ✅ כדי לא להציג LoginPage עד שבדקנו
+
+    const logout = async () => {
+      try {
+        await axios.post('/auth/logout', {}, { withCredentials: true });
+        store.logout();
+        window.location.reload(); 
+      } catch (err) {
+        console.error("Logout failed:", err);
+      }
+    };
 
     const fetchRecipes = async () => {
       try {
@@ -46,13 +63,35 @@ export default {
       }
     };
 
-    onMounted(fetchRecipes);
+    const checkLogin = async () => {
+      try {
+        const res = await axios.get('/users/me', { withCredentials: true });
+        if (res.status === 200 && res.data?.username) {
+          store.login(res.data.username);
+        }
+      } catch (err) {
+        console.log("User not logged in");
+      } finally {
+        checkedLogin.value = true;
+      }
+    };
+
+    onMounted(async () => {
+      await checkLogin();     // ⬅️ בדיקה אם מחובר
+      await fetchRecipes();
+    });
 
     const loadMoreRecipes = () => {
       fetchRecipes();
     };
 
-    return { randomRecipes, store, loadMoreRecipes };
+    return {
+      randomRecipes,
+      store,
+      loadMoreRecipes,
+      logout,
+      checkedLogin
+    };
   }
 };
 </script>
@@ -107,6 +146,20 @@ export default {
   background-color: #2563eb;
 }
 
+  .logout-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  background-color: #ef4444;
+  border: none;
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.logout-button:hover {
+  background-color: #dc2626;
+}
+
 @media (max-width: 768px) {
   .main-container {
     flex-direction: column;
@@ -116,5 +169,8 @@ export default {
   .right-column {
     margin-top: 2rem;
   }
+
+
+
 }
 </style>
