@@ -54,10 +54,18 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
   min-height: 100vh;
+  padding-top: 80px; 
 }
 
 #nav {
-  padding: 30px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 20px 30px;
+  background-color: #ffffff;
+  z-index: 999;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 #nav a {

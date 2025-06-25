@@ -135,7 +135,7 @@ export default {
 
     onMounted(async () => {
       try {
-        const res = await proxy.axios.get('/user/me');
+const res = await proxy.axios.get('/users/me', { withCredentials: true });
         if (res.status === 200 && res.data?.username) {
           isLoggedIn.value = true;
           alreadyLoggedInMessage.value = `כבר התחברת בתור ${res.data.username}`;
@@ -147,7 +147,7 @@ export default {
       } catch (err) {
         console.debug("User is not logged in yet");
       } finally {
-        checkedLogin.value = true; // ✅ טוען את התוכן רק לאחר הבדיקה
+        checkedLogin.value = true; 
       }
     });
 
