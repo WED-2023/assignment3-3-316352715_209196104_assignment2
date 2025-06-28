@@ -1,10 +1,10 @@
 
 import { createApp } from 'vue';
 import App from './App.vue';
-import routes from './router/index';
+import router from './router/index';
 import axios from 'axios';
 import VueAxios from 'vue-axios';
-import { createRouter, createWebHistory } from 'vue-router';
+// import { createRouter, createWebHistory } from 'vue-router';
 import "@fortawesome/fontawesome-free/css/all.css";
 import "@fortawesome/fontawesome-free/js/all.js";
 
@@ -16,10 +16,10 @@ import BootstrapVue3 from 'bootstrap-vue-3'
 
 import store from './store';
 
-const router = createRouter({
-  history: createWebHistory(),
-  routes
-});
+// const router = createRouter({
+//   history: createWebHistory(),
+//   routes
+// });
 
 const app = createApp(App);
 
