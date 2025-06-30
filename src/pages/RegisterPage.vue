@@ -94,7 +94,7 @@
           {{ serverError }}
       </div>
 
-      <button type="submit" class="form-button mt-2">רשום אותי</button>
+        <BaseButton type="register" htmlType="submit" class="mt-2">הירשם</BaseButton>
     </form>
   </FormWrapper>
 </template>
@@ -106,11 +106,13 @@ import { required, minLength, maxLength, email, sameAs } from '@vuelidate/valida
 import FormWrapper from "@/components/FormWrapper.vue"
 import countries from "@/assets/countries.json";
 import { useRouter } from 'vue-router';
+import BaseButton from "@/components/BaseButton.vue";
+
 
 
 export default {
   name: 'RegisterPage',
-  components: { FormWrapper },
+  components: { FormWrapper, BaseButton },
   setup() {
     const { proxy } = getCurrentInstance();
     const showPassword = ref(false);
@@ -220,21 +222,7 @@ export default {
   box-sizing: border-box;
 }
 
-.form-button {
-  width: 100%;
-  background-color: #e76f51;
-  color: white;
-  border: none;
-  padding: 0.75rem;
-  font-size: 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
 
-.form-button:hover {
-  background-color: #d3583c;
-}
 
 .text-danger {
   color: #dc3545;

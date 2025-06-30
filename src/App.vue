@@ -1,27 +1,37 @@
 <template>
   <div id="app">
-    <div id="nav">
-      <router-link :to="{ name: 'main' }">Vue Recipes</router-link> |
-      <router-link :to="{ name: 'search' }">Search</router-link> |
-      <router-link :to="{name: 'family-recipes'}">Family Recipes</router-link> | 
-      <router-link :to="{name: 'create-recipe'}">Add a recipe</router-link> | 
-      
-      <span v-if="!store?.username">
+    <template v-if="checkedLogin">
+      <div id="nav">
+        <router-link :to="{ name: 'main' }">Main Menu</router-link> |
+        <router-link :to="{ name: 'search' }">Search</router-link> |
+        <router-link :to="{name: 'family-recipes'}">Family Recipes</router-link> | 
+        <router-link :to="{name: 'create-recipe'}">Add a Recipe</router-link>  |
+        <router-link :to="{name: 'about'}">About</router-link>  |
+        
+        <span v-if="!store?.username">
           Guest:
-        <router-link :to="{ name: 'register' }">Register</router-link> |
-        <router-link :to="{ name: 'login' }">Login</router-link> |
-      </span>
-      <span v-else>
-        {{ store.username }}:
-        <button @click="logout" class="btn btn-link p-0">Logout</button> |
-      </span>
+          <router-link :to="{ name: 'register' }">Register</router-link> |
+          <router-link :to="{ name: 'login' }">Login</router-link> |
+        </span>
+        <span v-else>
+          {{ store.username }}:
+          <button @click="logout" class="btn btn-link p-0">Logout</button> |
+        </span>
+      </div>
+      <router-view />
+    </template>
+
+    <!-- מסך טעינה זמני -->
+    <div v-else class="loading-screen">
+      <p>Checking login status...</p>
     </div>
-    <router-view />
   </div>
 </template>
 
+
 <script>
-import { getCurrentInstance, computed } from 'vue';
+import { getCurrentInstance, computed, onMounted, ref } from 'vue';
+import axios from 'axios';
 
 export default {
   name: "App",
@@ -31,19 +41,41 @@ export default {
     const toast = internalInstance.appContext.config.globalProperties.toast;
     const router = internalInstance.appContext.config.globalProperties.$router;
 
-    const logout = () => {
-      store.logout();
-      toast("Logout", "User logged out successfully", "success");
-      router.push("/").catch(() => {});
-    };
+    const checkedLogin = ref(false);
+
+const logout = async () => {
+  try {
+    await axios.post('/auth/logout', {}, { withCredentials: true });
+  } catch (err) {
+    console.error("Logout request failed:", err);
+  }
+
+  store.logout();
+  toast("Logout", "User logged out successfully", "success");
+  router.push("/").catch(() => {});
+};
 
     const username = computed(() => store?.username);
 
-    return { store, username, logout }; 
+    onMounted(async () => {
+      try {
+        const res = await axios.get('/users/me', { withCredentials: true });
+        if (res.status === 200 && res.data?.username) {
+          store.login(res.data.username);
+        } else {
+          store.logout();
+        }
+      } catch {
+        store.logout();
+      } finally {
+        checkedLogin.value = true;
+      }
+    });
+
+    return { store, username, logout, checkedLogin };
   }
 }
 </script>
-
 
 <style lang="scss">
 @import "@/scss/form-style.scss";
@@ -54,18 +86,51 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
   min-height: 100vh;
+  padding-top: 80px; 
+}
+#nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem 2rem;
+  background: #ffffff;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  font-family: 'Segoe UI', sans-serif;
+  z-index: 999;
 }
 
-#nav {
-  padding: 30px;
-}
 
 #nav a {
   font-weight: bold;
   color: #2c3e50;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 #nav a.router-link-exact-active {
-  color: #42b983;
+  background-color: #e76f51;
+  color: white;
 }
+
+#nav a:hover {
+  background-color: #f2f2f2;
+}
+
+
+#nav span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
 </style>

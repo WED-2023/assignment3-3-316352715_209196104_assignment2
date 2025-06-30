@@ -9,11 +9,17 @@
           :recipe="recipe"
         />
       </div>
-      <button class="more-button" @click="loadMoreRecipes">More</button>
+      <BaseButton type="more" @click="loadMoreRecipes">Show Other Recipes</BaseButton>
     </div>
 
     <div class="right-column">
-      <component :is="store.username ? 'LastViewed' : 'LoginPage'" />
+      <div v-if="store.username">
+        <LastViewed />
+        <button class="logout-button" @click="logout">התנתק</button>
+      </div>
+      <div v-else-if="checkedLogin">
+        <LoginPage />
+      </div>
     </div>
   </div>
 </template>
@@ -24,9 +30,11 @@ import axios from 'axios';
 import RecipePreview from '@/components/RecipePreview.vue';
 import LoginPage from '@/pages/LoginPage.vue';
 import LastViewed from '@/components/LastViewed.vue'; 
+import BaseButton from '@/components/BaseButton.vue';
 
 export default {
   components: {
+    BaseButton,
     RecipePreview,
     LoginPage,
     LastViewed
@@ -36,6 +44,17 @@ export default {
     const store = internalInstance.appContext.config.globalProperties.store;
 
     const randomRecipes = ref([]);
+    const checkedLogin = ref(false); // ✅ כדי לא להציג LoginPage עד שבדקנו
+
+    const logout = async () => {
+      try {
+        await axios.post('/auth/logout', {}, { withCredentials: true });
+        store.logout();
+        window.location.reload(); 
+      } catch (err) {
+        console.error("Logout failed:", err);
+      }
+    };
 
     const fetchRecipes = async () => {
       try {
@@ -46,13 +65,35 @@ export default {
       }
     };
 
-    onMounted(fetchRecipes);
+    const checkLogin = async () => {
+      try {
+        const res = await axios.get('/users/me', { withCredentials: true });
+        if (res.status === 200 && res.data?.username) {
+          store.login(res.data.username);
+        }
+      } catch (err) {
+        console.log("User not logged in");
+      } finally {
+        checkedLogin.value = true;
+      }
+    };
+
+    onMounted(async () => {
+      await checkLogin();     // ⬅️ בדיקה אם מחובר
+      await fetchRecipes();
+    });
 
     const loadMoreRecipes = () => {
       fetchRecipes();
     };
 
-    return { randomRecipes, store, loadMoreRecipes };
+    return {
+      randomRecipes,
+      store,
+      loadMoreRecipes,
+      logout,
+      checkedLogin
+    };
   }
 };
 </script>
@@ -92,19 +133,19 @@ export default {
   margin-bottom: 1rem;
 }
 
-.more-button {
-  margin-top: 1.5rem;
+
+  .logout-button {
+  margin-top: 1rem;
   padding: 0.5rem 1.5rem;
-  background-color: #3b82f6;
+  background-color: #ef4444;
   border: none;
   color: white;
   font-weight: bold;
   border-radius: 8px;
   cursor: pointer;
 }
-
-.more-button:hover {
-  background-color: #2563eb;
+.logout-button:hover {
+  background-color: #dc2626;
 }
 
 @media (max-width: 768px) {
@@ -116,5 +157,8 @@ export default {
   .right-column {
     margin-top: 2rem;
   }
+
+
+
 }
 </style>

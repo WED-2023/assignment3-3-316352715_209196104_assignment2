@@ -28,6 +28,6 @@ export default defineComponent({
                 .catch(err => console.error ('Error in fetching famiy recipes',err))
         });
         return {recipes};
-    },
+    }
 })
 </script>

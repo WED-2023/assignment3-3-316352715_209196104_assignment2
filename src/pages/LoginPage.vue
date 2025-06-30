@@ -37,7 +37,7 @@
           {{ alreadyLoggedInMessage }}
         </div>
 
-        <button type="submit" class="form-button mt-2">התחבר</button>
+        <BaseButton type="login" htmlType="submit" class="mt-2">התחבר</BaseButton>
 
         <div v-if="loginSuccess" class="text-success" style="margin-top:0.5rem;">
           התחברת בהצלחה!
@@ -60,10 +60,12 @@ import { useVuelidate } from '@vuelidate/core';
 import { required, minLength } from '@vuelidate/validators';
 import FormWrapper from "@/components/FormWrapper.vue";
 import { useRouter } from 'vue-router';
+import BaseButton from "@/components/BaseButton.vue";
+
 
 export default {
   name: "LoginPage",
-  components: { FormWrapper },
+  components: { FormWrapper, BaseButton },
   setup(_, { expose }) {
     const { proxy } = getCurrentInstance();
     const router = useRouter();
@@ -84,7 +86,7 @@ export default {
     const loginSuccess = ref(false);
     const loginFailed = ref(false);
     const isLoggedIn = ref(false);
-    const checkedLogin = ref(false); // ✅ חדש – כדי למנוע טעינה מוקדמת של הטופס
+    const checkedLogin = ref(false); 
 
     watch(() => state.username, () => serverError.value = '');
     watch(() => state.password, () => serverError.value = '');
@@ -101,9 +103,7 @@ export default {
           });
 
           if (response.status === 200) {
-            if (window?.store?.login)
-              window.store.login(state.username);
-
+            proxy.store.login(state.username);
             loginSuccess.value = true;
             setTimeout(() => router.push('/'), 1500);
           } else {
@@ -132,24 +132,23 @@ export default {
         }
       }
     };
+onMounted(async () => {
+  try {
+    const res = await proxy.axios.get('/user/me');
+    if (res.status === 200 && res.data?.username) {
+      isLoggedIn.value = true;
+      alreadyLoggedInMessage.value = `כבר התחברת בתור ${res.data.username}`;
 
-    onMounted(async () => {
-      try {
-        const res = await proxy.axios.get('/user/me');
-        if (res.status === 200 && res.data?.username) {
-          isLoggedIn.value = true;
-          alreadyLoggedInMessage.value = `כבר התחברת בתור ${res.data.username}`;
-          if (window?.store?.login) {
-            window.store.login(res.data.username);
-          }
-          setTimeout(() => router.push('/'), 2000);
-        }
-      } catch (err) {
-        console.debug("User is not logged in yet");
-      } finally {
-        checkedLogin.value = true; // ✅ טוען את התוכן רק לאחר הבדיקה
-      }
-    });
+      proxy.store.login(res.data.username);
+      setTimeout(() => router.push('/'), 2000);
+    }
+  } catch (err) {
+    console.debug("User is not logged in yet");
+  } finally {
+    checkedLogin.value = true;
+  }
+});
+
 
     expose({ login });
 
@@ -163,7 +162,7 @@ export default {
       loginSuccess,
       loginFailed,
       isLoggedIn,
-      checkedLogin,
+      checkedLogin
     };
   }
 };
@@ -178,22 +177,6 @@ export default {
   border-radius: 8px;
   font-size: 16px;
   box-sizing: border-box;
-}
-
-.form-button {
-  width: 100%;
-  background-color: #e76f51;
-  color: white;
-  border: none;
-  padding: 0.75rem;
-  font-size: 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.form-button:hover {
-  background-color: #d3583c;
 }
 
 .text-danger {
