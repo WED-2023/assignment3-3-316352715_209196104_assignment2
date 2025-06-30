@@ -7,6 +7,7 @@
     @ok="submitRecipe"
     @hide="$emit('update:show', false)"
   >
+  <p> {{ internalShow }}</p>
     <form>
       <b-form-group label="שם מתכון">
         <b-form-input v-model="recipe.name" required />
