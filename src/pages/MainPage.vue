@@ -1,7 +1,7 @@
 <template>
   <div class="main-container">
     <div class="left-column">
-      <h2 class="section-title">Explore These Recipes</h2>
+      <h2 class="section-title">Explore These Recipes - </h2>
       <div class="recipe-list">
         <RecipePreview
           v-for="recipe in randomRecipes"
