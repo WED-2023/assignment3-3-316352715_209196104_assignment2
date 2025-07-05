@@ -96,6 +96,11 @@
 
         <BaseButton type="register" htmlType="submit" class="mt-2">הירשם</BaseButton>
     </form>
+
+    <BaseButton type="link" @click="$emit('toggle-auth')">
+  יש לך כבר חשבון? התחבר
+</BaseButton>
+
   </FormWrapper>
 </template>
 

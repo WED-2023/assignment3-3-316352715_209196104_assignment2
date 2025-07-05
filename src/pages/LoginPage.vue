@@ -50,6 +50,11 @@
       <div v-else class="already-logged-in-message">
         {{ alreadyLoggedInMessage || 'כבר התחברת למערכת' }}
       </div>
+
+          <BaseButton type="link" @click="$emit('toggle-auth')">
+      אין לך חשבון? הירשם
+    </BaseButton>
+
     </template>
   </FormWrapper>
 </template>

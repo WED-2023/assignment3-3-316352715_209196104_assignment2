@@ -12,7 +12,8 @@ export default {
       type: String,
       default: "submit", 
       validator: (val) =>
-        ["submit", "login", "register", "outline", "nav","more"].includes(val),
+  ["submit", "login", "register", "outline", "nav", "more", "link"].includes(val),
+
     },
     htmlType: {
       type: String,

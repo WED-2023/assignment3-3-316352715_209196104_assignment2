@@ -1,7 +1,7 @@
 <template>
    <div class="container mt-4">
     <h1>Family Recipes</h1>
-    <div v.if="recipes.length === 0">No family recipes to display </div>
+    <div v-if="recipes.length === 0">No family recipes to display </div>
     <FamilyRecipes
     v-for="r in recipes"
     :key="r.recipe_id"

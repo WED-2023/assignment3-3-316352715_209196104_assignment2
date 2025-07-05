@@ -20,7 +20,7 @@ export default {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(to right, #f7e9d7, #ffe9e3);
+  /* background: linear-gradient(to right, #f7e9d7, #ffe9e3); */
   font-family: 'Segoe UI', sans-serif;
 }
 

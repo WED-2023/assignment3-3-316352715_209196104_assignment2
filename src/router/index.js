@@ -10,9 +10,11 @@ const routes = [
   { path: "/search", name: "search", component: () => import("../pages/SearchPage.vue") },
   { path: "/about", name: "about",   component: () => import('../pages/AboutPage.vue') },
   { path: "/recipes/:recipeId", name: "recipe", component: () => import("@/pages/RecipeViewPage.vue") },
-  { path: "/:catchAll(.*)", name: "notFound", component: NotFound },
   { path: '/recipes/family-recipes', name: 'family-recipes', component: () => import('@/pages/FamilyRecipesPage.vue') },
-  { path: '/recipes/create', name: 'create-recipe', component: () => import('@/pages/CreateRecipeModalPage.vue') }
+  { path: '/recipes/create', name: 'create-recipe', component: () => import('@/pages/CreateRecipeModalPage.vue') },
+  { path: "/favorites", name: "favorites", component: () => import('@/pages/Favorites.vue') },
+  { path: "/:catchAll(.*)", name: "notFound", component: NotFound }
+
 ];
 
 const router = createRouter({

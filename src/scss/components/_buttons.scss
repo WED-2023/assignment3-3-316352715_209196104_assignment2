@@ -83,3 +83,19 @@
     background-color: rgba(231, 111, 81, 0.1);
   }
 }
+
+  .btn--link {
+  background: none;
+  border: none;
+  color: #e76f51;
+  text-decoration: underline;
+  font-size: 0.95rem;
+  padding: 0.25rem;
+  cursor: pointer;
+  box-shadow: none;
+}
+.btn--link:hover {
+  color: #d65c3b;
+  text-decoration: underline;
+}
+

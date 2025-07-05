@@ -18,8 +18,14 @@
         <button class="logout-button" @click="logout">התנתק</button>
       </div>
       <div v-else-if="checkedLogin">
-        <LoginPage />
-      </div>
+  <h2 class="welcome-guest">שלום אורח! רוצה להתחבר או להירשם?</h2>
+
+<LoginPage v-if="!isRegistering" @toggle-auth="toggleAuthMode" />
+<RegisterPage v-else @toggle-auth="toggleAuthMode" />
+
+
+</div>
+
     </div>
   </div>
 </template>
@@ -31,20 +37,29 @@ import RecipePreview from '@/components/RecipePreview.vue';
 import LoginPage from '@/pages/LoginPage.vue';
 import LastViewed from '@/components/LastViewed.vue'; 
 import BaseButton from '@/components/BaseButton.vue';
+import RegisterPage from '@/pages/RegisterPage.vue';
+
 
 export default {
   components: {
-    BaseButton,
-    RecipePreview,
-    LoginPage,
-    LastViewed
-  },
+  BaseButton,
+  RecipePreview,
+  LoginPage,
+  RegisterPage,
+  LastViewed
+}
+,
   setup() {
     const internalInstance = getCurrentInstance();
     const store = internalInstance.appContext.config.globalProperties.store;
 
     const randomRecipes = ref([]);
-    const checkedLogin = ref(false); // ✅ כדי לא להציג LoginPage עד שבדקנו
+    const checkedLogin = ref(false); 
+    const isRegistering = ref(false);
+
+    const toggleAuthMode = () => {
+     isRegistering.value = !isRegistering.value;
+    };
 
     const logout = async () => {
       try {
@@ -79,7 +94,7 @@ export default {
     };
 
     onMounted(async () => {
-      await checkLogin();     // ⬅️ בדיקה אם מחובר
+      await checkLogin();    
       await fetchRecipes();
     });
 
@@ -87,13 +102,16 @@ export default {
       fetchRecipes();
     };
 
-    return {
+        return {
       randomRecipes,
       store,
       loadMoreRecipes,
       logout,
-      checkedLogin
+      checkedLogin,
+      isRegistering,
+      toggleAuthMode
     };
+
   }
 };
 </script>

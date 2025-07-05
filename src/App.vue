@@ -2,58 +2,63 @@
   <div id="app">
     <template v-if="checkedLogin">
       <div id="nav">
-        <router-link :to="{ name: 'main' }">Main Menu</router-link> |
-        <router-link :to="{ name: 'search' }">Search</router-link> |
-        <router-link :to="{name: 'family-recipes'}">Family Recipes</router-link> | 
-        <router-link :to="{name: 'create-recipe'}">Add a Recipe</router-link>  |
-        <router-link :to="{name: 'about'}">About</router-link>  |
-        
-        <span v-if="!store?.username">
-          Guest:
-          <router-link :to="{ name: 'register' }">Register</router-link> |
-          <router-link :to="{ name: 'login' }">Login</router-link> |
-        </span>
-        <span v-else>
-          {{ store.username }}:
-          <button @click="logout" class="btn btn-link p-0">Logout</button> |
-        </span>
+        <router-link class="btn--nav" :to="{ name: 'main' }">Main Menu</router-link>
+        <router-link class="btn--nav" :to="{ name: 'search' }">Search</router-link>
+        <router-link class="btn--nav" :to="{ name: 'family-recipes' }">Family Recipes</router-link>
+        <router-link class="btn--nav" :to="{ name: 'create-recipe' }">Add a Recipe</router-link>
+        <router-link class="btn--nav" :to="{ name: 'about' }">About</router-link>
+
+        <div v-if="!store?.username" class="guest-links">
+          <router-link class="btn--nav" :to="{ name: 'register' }">Register</router-link>
+          <router-link class="btn--nav" :to="{ name: 'login' }">Login</router-link>
+        </div>
+
+        <div v-else class="user-info">
+          <span>{{ store.username }}:</span>
+          <BaseButton type="nav" @click="logout">Logout</BaseButton>
+          <PersonalMenu />
+        </div>
       </div>
+
       <router-view />
     </template>
 
-    <!-- מסך טעינה זמני -->
     <div v-else class="loading-screen">
       <p>Checking login status...</p>
     </div>
   </div>
 </template>
 
-
 <script>
 import { getCurrentInstance, computed, onMounted, ref } from 'vue';
 import axios from 'axios';
+import BaseButton from "@/components/BaseButton.vue";
+import PersonalMenu from "@/components/PersonalMenu.vue";
 
 export default {
   name: "App",
+  components: {
+    BaseButton,
+    PersonalMenu
+  },
   setup() {
     const internalInstance = getCurrentInstance();
     const store = internalInstance.appContext.config.globalProperties.store;
     const toast = internalInstance.appContext.config.globalProperties.toast;
     const router = internalInstance.appContext.config.globalProperties.$router;
-
     const checkedLogin = ref(false);
 
-const logout = async () => {
-  try {
-    await axios.post('/auth/logout', {}, { withCredentials: true });
-  } catch (err) {
-    console.error("Logout request failed:", err);
-  }
+    const logout = async () => {
+      try {
+        await axios.post('/auth/logout', {}, { withCredentials: true });
+      } catch (err) {
+        console.error("Logout request failed:", err);
+      }
 
-  store.logout();
-  toast("Logout", "User logged out successfully", "success");
-  router.push("/").catch(() => {});
-};
+      store.logout();
+      toast("Logout", "User logged out successfully", "success");
+      router.push("/").catch(() => {});
+    };
 
     const username = computed(() => store?.username);
 
@@ -72,9 +77,14 @@ const logout = async () => {
       }
     });
 
-    return { store, username, logout, checkedLogin };
+    return {
+      store,
+      username,
+      logout,
+      checkedLogin
+    };
   }
-}
+};
 </script>
 
 <style lang="scss">
@@ -86,8 +96,9 @@ const logout = async () => {
   -moz-osx-font-smoothing: grayscale;
   color: #2c3e50;
   min-height: 100vh;
-  padding-top: 80px; 
+  padding-top: 80px;
 }
+
 #nav {
   position: fixed;
   top: 0;
@@ -106,8 +117,7 @@ const logout = async () => {
   z-index: 999;
 }
 
-
-#nav a {
+a.btn--nav {
   font-weight: bold;
   color: #2c3e50;
   text-decoration: none;
@@ -116,21 +126,25 @@ const logout = async () => {
   transition: background-color 0.3s, color 0.3s;
 }
 
-#nav a.router-link-exact-active {
+a.btn--nav:hover {
+  background-color: #f2f2f2;
+  color: #e76f51;
+}
+
+a.router-link-exact-active {
   background-color: #e76f51;
   color: white;
 }
 
-#nav a:hover {
-  background-color: #f2f2f2;
-}
-
-
-#nav span {
+#nav .guest-links,
+#nav .user-info {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.95rem;
 }
 
+.loading-screen {
+  text-align: center;
+  padding: 2rem;
+}
 </style>
