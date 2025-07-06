@@ -8,7 +8,8 @@
       v-for="r in recipes"
       :key="r.recipe_id || r.id"
       :recipe="r"
-      :favorites="favoriteIds"
+      :favorites="favoriteIds.map(f => String(f.recipe_id || f.id))"
+      @favorite-toggled="handleFavoriteToggle"
     />
   </div>
 </template>
@@ -31,12 +32,27 @@ export default defineComponent({
         favoriteIds.value = ids;
 
         const recipeResponses = await Promise.all(
-          ids.map(id => axios.get(`/recipes/${id}`, { withCredentials: true }))
+          ids.map(({ id, recipe_id }) =>
+            axios.get(`/recipes/${recipe_id || id}`, { withCredentials: true })
+          )
         );
 
         recipes.value = recipeResponses.map(res => res.data);
       } catch (err) {
         console.error('Error loading favorite recipes:', err);
+      }
+    };
+
+    const handleFavoriteToggle = ({ id, liked }) => {
+      const strId = String(id);
+
+      if (liked && !favoriteIds.value.includes(strId)) {
+        favoriteIds.value.push(strId);
+      } else if (!liked && favoriteIds.value.includes(strId)) {
+        favoriteIds.value = favoriteIds.value.filter(f => f !== strId);
+        recipes.value = recipes.value.filter(r =>
+          String(r.recipe_id || r.id) !== strId
+        );
       }
     };
 
@@ -46,7 +62,8 @@ export default defineComponent({
 
     return {
       recipes,
-      favoriteIds
+      favoriteIds,
+      handleFavoriteToggle
     };
   }
 });

@@ -72,7 +72,7 @@ export default {
   methods: {
     emitSearch() {
       this.$emit('search', {
-        query: this.query,
+        title: this.query,
         limit: this.limit,
         ...this.filters
       });

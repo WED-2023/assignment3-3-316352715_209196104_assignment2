@@ -139,7 +139,7 @@ export default {
     };
 onMounted(async () => {
   try {
-    const res = await proxy.axios.get('/user/me');
+    const res = await proxy.axios.get('/users/me');
     if (res.status === 200 && res.data?.username) {
       isLoggedIn.value = true;
       alreadyLoggedInMessage.value = `כבר התחברת בתור ${res.data.username}`;
