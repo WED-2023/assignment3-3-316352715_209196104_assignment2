@@ -10,7 +10,7 @@
   <p> {{ internalShow }}</p>
     <form>
       <b-form-group label="שם מתכון">
-        <b-form-input v-model="recipe.name" required />
+        <b-form-input v-model="recipe.title" required />
       </b-form-group>
 
       <b-form-group label="קישור לתמונה">
@@ -61,7 +61,7 @@ export default {
   data() {
     return {
       recipe: {
-        name: '',
+        title: '',
         img: '',
         time: 0,
         description: '',

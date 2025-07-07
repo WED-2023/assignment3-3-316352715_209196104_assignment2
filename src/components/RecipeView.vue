@@ -2,7 +2,7 @@
   <div v-if="recipe" class="container py-4">
     <div class="recipe-header text-center mb-4">
       <h2>{{ recipe.title }}</h2>
-      <img :src="recipe.image" alt="Recipe image" class="recipe-image" />
+      <img :src="recipe.image || recipe.img" alt="Recipe image" class="recipe-image" />
     </div>
     <div class="row">
       <div class="col-md-6">
@@ -10,7 +10,7 @@
         <ul>
           <li v-for="(ingredient, index) in recipe.ingredients" :key="index">
             {{ ingredient }}
-          </li>
+          </li>``
         </ul>
       </div>
       <div class="col-md-6">
