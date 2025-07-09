@@ -1,26 +1,32 @@
 <template>
   <div class="container py-4">
-    <h2 class="mb-3">חיפוש מתכונים</h2>
+    <h2 class="mb-3 text-end fw-bold text-primary">חיפוש מתכונים</h2>
 
     <form @submit.prevent="search" class="mb-4">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-4">
+      <div class="row g-4">
+        <div class="col-md-4 text-end">
           <label class="form-label">שם מתכון</label>
-          <input v-model="query" type="text" class="form-control" placeholder="חפש לפי שם..." />
+          <input
+            v-model="query"
+            type="text"
+            class="form-control"
+            placeholder="חפש לפי שם..."
+            dir="rtl"
+          />
         </div>
 
-        <div class="col-md-2">
+        <div class="col-md-2 text-end">
           <label class="form-label">כמות תוצאות</label>
-          <select v-model="number" class="form-select">
+          <select v-model="number" class="form-select" dir="rtl">
             <option :value="5">5</option>
             <option :value="10">10</option>
             <option :value="15">15</option>
           </select>
         </div>
 
-        <div class="col-md-2">
+        <div class="col-md-2 text-end">
           <label class="form-label">סוג מטבח</label>
-          <select v-model="cuisine" class="form-select">
+          <select v-model="cuisine" class="form-select" dir="rtl">
             <option value="">ללא סינון</option>
             <option value="italian">איטלקי</option>
             <option value="mexican">מקסיקני</option>
@@ -28,9 +34,9 @@
           </select>
         </div>
 
-        <div class="col-md-2">
+        <div class="col-md-2 text-end">
           <label class="form-label">דיאטה</label>
-          <select v-model="diet" class="form-select">
+          <select v-model="diet" class="form-select" dir="rtl">
             <option value="">ללא סינון</option>
             <option value="vegan">טבעוני</option>
             <option value="vegetarian">צמחוני</option>
@@ -38,17 +44,19 @@
           </select>
         </div>
 
-        <div class="col-md-2">
+        <div class="col-md-2 text-end">
           <label class="form-label">מיין לפי</label>
-          <select v-model="sort" class="form-select">
+          <select v-model="sort" class="form-select" dir="rtl">
             <option value="">ללא מיון</option>
             <option value="popularity">פופולריות</option>
             <option value="time">זמן הכנה</option>
           </select>
         </div>
 
-        <div class="col-12 text-end">
-          <button type="submit" class="btn btn-primary">חפש</button>
+        <div class="col-12 text-end mt-2">
+          <button type="submit" class="btn btn-outline-success px-4 py-2 fs-5 fw-bold">
+            <i class="fas fa-search ms-2"></i> חפש
+          </button>
         </div>
       </div>
     </form>
@@ -56,9 +64,13 @@
     <RecipePreviewList
       v-if="results.length"
       :recipes="results"
+      :favorites="favorites"
+      :viewed-ids="viewedIds"
       :sort-by="sort"
       title="תוצאות חיפוש"
+      @favorite-toggled="handleFavoriteToggle"
     />
+
     <div v-else-if="hasSearched" class="text-center text-muted mt-5">
       <p>לא נמצאו תוצאות.</p>
     </div>
@@ -66,6 +78,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 import RecipePreviewList from '@/components/RecipePreviewList.vue';
 
 export default {
@@ -79,7 +92,9 @@ export default {
       diet: '',
       sort: '',
       results: [],
-      hasSearched: false
+      hasSearched: false,
+      favorites: [],
+      viewedIds: []
     };
   },
   methods: {
@@ -91,12 +106,10 @@ export default {
           cuisine: this.cuisine,
           diet: this.diet,
           sortBy: this.sort === 'time' ? undefined : this.sort,
-          order: 'desc'
-
+          order: 'desc',
         };
-        console.log('Search params:', params);
         this.results = [];
-        const { data } = await this.axios.get('/recipes/', { params });
+        const { data } = await axios.get('/recipes/', { params });
         this.results = data;
         this.hasSearched = true;
         localStorage.setItem('lastSearch', JSON.stringify(params));
@@ -105,13 +118,31 @@ export default {
         this.results = [];
         this.hasSearched = true;
       }
+    },
+    handleFavoriteToggle({ id, liked }) {
+      const strId = String(id);
+      if (liked && !this.favorites.includes(strId)) {
+        this.favorites.push(strId);
+      } else if (!liked && this.favorites.includes(strId)) {
+        this.favorites = this.favorites.filter(f => f !== strId);
+      }
     }
   },
-  mounted() {
+  async mounted() {
     const last = localStorage.getItem('lastSearch');
     if (last) {
       Object.assign(this.$data, JSON.parse(last));
       this.search();
+    }
+
+    try {
+      const res1 = await axios.get('/users/favorites', { withCredentials: true });
+      this.favorites = res1.data.map(f => String(f.recipe_id || f.id));
+
+      const res2 = await axios.get('/recipes/viewed/ids', { withCredentials: true });
+      this.viewedIds = res2.data.map(String);
+    } catch (err) {
+      console.warn('Failed to load favorites/viewed:', err);
     }
   }
 };
@@ -120,6 +151,6 @@ export default {
 <style scoped>
 input.form-control,
 select.form-select {
-  direction: rtl;
+  text-align: right;
 }
 </style>

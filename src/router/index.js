@@ -13,6 +13,8 @@ const routes = [
   { path: '/recipes/family-recipes', name: 'family-recipes', component: () => import('@/pages/FamilyRecipesPage.vue') },
   { path: '/recipes/create', name: 'create-recipe', component: () => import('@/pages/CreateRecipeModalPage.vue') },
   { path: "/favorites", name: "favorites", component: () => import('@/pages/Favorites.vue') },
+  { path: "/recipes/myRecipes", name: "my-recipes", component: () => import('@/pages/MyRecipesPage.vue') },
+
   { path: "/:catchAll(.*)", name: "notFound", component: NotFound }
 
 ];

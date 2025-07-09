@@ -1,15 +1,18 @@
 <template>
   <div class="last-viewed-recipes">
-    <h3 class="section-title">Last Viewed Recipes</h3>
+    <h3 class="section-title">מתכונים אחרונים שצפית בהם</h3>
     <div v-if="recipes.length > 0" class="recipes-list">
       <RecipePreview
         v-for="recipe in recipes"
         :key="recipe.recipe_id || recipe.id"
         :recipe="recipe"
+        :favorites="favorites"
+        :viewed-ids="viewedIds"
+        @favorite-toggled="handleFavoriteToggle"
       />
     </div>
     <div v-else class="no-recipes">
-      You haven't viewed any recipes yet.
+      עדיין לא צפית בשום מתכון.
     </div>
   </div>
 </template>
@@ -19,21 +22,37 @@ import axios from 'axios';
 import RecipePreview from './RecipePreview.vue';
 
 export default {
-  name: 'LastViewedRecipes',
+  name: 'LastViewed',
   components: { RecipePreview },
+  props: {
+    favorites: {
+      type: Array,
+      default: () => [],
+    },
+    viewedIds: {
+      type: Array,
+      default: () => [],
+    },
+  },
+  emits: ['favorite-toggled'],
   data() {
     return {
-      recipes: []
+      recipes: [],
     };
   },
   async mounted() {
     try {
-      const response = await axios.get('/recipes/viewed');
-      this.recipes = response.data;
+      const { data } = await axios.get('/recipes/viewed', { withCredentials: true });
+      this.recipes = data;
     } catch (err) {
       console.error('Failed to fetch last viewed recipes:', err);
     }
-  }
+  },
+  methods: {
+    handleFavoriteToggle(payload) {
+      this.$emit('favorite-toggled', payload);
+    },
+  },
 };
 </script>
 

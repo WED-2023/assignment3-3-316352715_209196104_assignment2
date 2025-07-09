@@ -2,64 +2,79 @@
   <div class="main-container">
     <div class="left-column">
       <h2 class="section-title">Explore These Recipes - </h2>
+
       <div class="recipe-list">
         <RecipePreview
           v-for="recipe in randomRecipes"
           :key="recipe.recipe_id || recipe.id"
           :recipe="recipe"
           :favorites="favorites"
+          :viewed-ids="viewedIds"
           @favorite-toggled="handleFavoriteToggle"
         />
       </div>
-      <BaseButton type="more" @click="loadMoreRecipes">Show Other Recipes</BaseButton>
+
+      <BaseButton type="more" @click="loadMoreRecipes">
+        Show Other Recipes
+      </BaseButton>
     </div>
 
     <div class="right-column">
-      <div v-if="store.username">
-        <LastViewed />
-        <button class="logout-button" @click="logout">התנתק</button>
-      </div>
+      <template v-if="store.username">
+         <LastViewed
+            :favorites="favorites"
+            :viewed-ids="viewedIds"
+            @favorite-toggled="handleFavoriteToggle"
+          />
 
-      <div v-else-if="checkedLogin">
+        <button class="logout-button" @click="logout">התנתק</button>
+      </template>
+
+      <template v-else-if="checkedLogin">
         <div class="auth-box">
-          <h2 class="welcome-message">היי! שמחים שבאת – איך נוח לך להתחיל?</h2>
+          <h2 class="welcome-message">
+            היי! שמחים שבאת. איך נוח לך להתחיל?
+          </h2>
           <LoginPage v-if="!isRegistering" @toggle-auth="toggleAuthMode" />
           <RegisterPage v-else @toggle-auth="toggleAuthMode" />
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script>
-import { getCurrentInstance, ref, onMounted } from 'vue';
+import { ref, onMounted, getCurrentInstance } from 'vue';
 import axios from 'axios';
+
 import RecipePreview from '@/components/RecipePreview.vue';
-import LoginPage from '@/pages/LoginPage.vue';
-import LastViewed from '@/components/LastViewed.vue';
-import BaseButton from '@/components/BaseButton.vue';
-import RegisterPage from '@/pages/RegisterPage.vue';
+import LastViewed     from '@/components/LastViewed.vue';
+import BaseButton     from '@/components/BaseButton.vue';
+import LoginPage      from '@/pages/LoginPage.vue';
+import RegisterPage   from '@/pages/RegisterPage.vue';
 
 export default {
   components: {
-    BaseButton,
     RecipePreview,
+    LastViewed,
+    BaseButton,
     LoginPage,
     RegisterPage,
-    LastViewed
   },
   setup() {
-    const internalInstance = getCurrentInstance();
-    const store = internalInstance.appContext.config.globalProperties.store;
-
+    /* ─────────────────── Reactive state ─────────────────── */
     const randomRecipes = ref([]);
-    const favorites = ref([]);
-    const checkedLogin = ref(false);
+    const favorites     = ref([]);
+    const viewedIds     = ref([]);
+    const checkedLogin  = ref(false);
     const isRegistering = ref(false);
 
-    const toggleAuthMode = () => {
-      isRegistering.value = !isRegistering.value;
-    };
+    /* ─────────────────── Store (global) ─────────────────── */
+    const { appContext } = getCurrentInstance();
+    const store = appContext.config.globalProperties.store;
+
+    /* ─────────────────── Auth helpers ───────────────────── */
+    const toggleAuthMode = () => (isRegistering.value = !isRegistering.value);
 
     const logout = async () => {
       try {
@@ -67,78 +82,78 @@ export default {
         store.logout();
         window.location.reload();
       } catch (err) {
-        console.error("Logout failed:", err);
+        console.error('Logout failed:', err);
       }
     };
 
+    /* ─────────────────── Data fetchers ──────────────────── */
     const fetchRecipes = async () => {
-      try {
-        const response = await axios.get('/recipes/random');
-        randomRecipes.value = response.data;
-      } catch (err) {
-        console.error("Failed to fetch random recipes:", err);
-      }
+      const { data } = await axios.get('/recipes/random');
+      randomRecipes.value = data;
     };
 
     const fetchFavorites = async () => {
+      const { data } = await axios.get('/users/favorites', { withCredentials: true });
+      favorites.value = data.map(f => String(f.recipe_id || f.id));
+    };
+
+    const fetchViewedIds = async () => {
       try {
-        const response = await axios.get('/users/favorites', { withCredentials: true });
-        favorites.value = response.data.map(f => String(f.recipe_id || f.id));
-      } catch (err) {
-        console.log("Could not load favorites.");
-        favorites.value = [];
+        const { data } = await axios.get('/recipes/viewed/ids', { withCredentials: true });
+        viewedIds.value = data.map(String);
+      } catch {
+        viewedIds.value = [];
       }
     };
 
     const checkLogin = async () => {
       try {
-        const res = await axios.get('/users/me', { withCredentials: true });
-        if (res.status === 200 && res.data?.username) {
-          store.login(res.data.username);
-        }
-      } catch (err) {
-        console.log("User not logged in");
+        const { data } = await axios.get('/users/me', { withCredentials: true });
+        if (data?.username) store.login(data.username);
       } finally {
         checkedLogin.value = true;
       }
     };
 
+    /* ────────────────── Event handlers ──────────────────── */
     const handleFavoriteToggle = ({ id, liked }) => {
       const strId = String(id);
       if (liked && !favorites.value.includes(strId)) {
         favorites.value.push(strId);
-      } else if (!liked && favorites.value.includes(strId)) {
+      } else if (!liked) {
         favorites.value = favorites.value.filter(f => f !== strId);
       }
     };
 
-    const loadMoreRecipes = () => {
-      fetchRecipes();
-    };
+    const loadMoreRecipes = fetchRecipes;
 
+    /* ───────────────────── Lifecycle ────────────────────── */
     onMounted(async () => {
       await checkLogin();
       if (store.username) {
-        await fetchFavorites();
+        await Promise.all([fetchFavorites(), fetchViewedIds()]);
+      } else {
+        await fetchViewedIds();   // גם אורחים רואים נצפים גלובליים / אחרונים
       }
       await fetchRecipes();
     });
 
+    /* ─────────────────── expose to template ─────────────── */
     return {
       randomRecipes,
       favorites,
-      store,
-      loadMoreRecipes,
-      logout,
+      viewedIds,
       checkedLogin,
       isRegistering,
+      store,
       toggleAuthMode,
-      handleFavoriteToggle
+      logout,
+      handleFavoriteToggle,
+      loadMoreRecipes,
     };
-  }
+  },
 };
 </script>
-
 
 <style scoped>
 .main-container {

@@ -4,8 +4,6 @@
       <div id="nav">
         <router-link class="btn--nav" :to="{ name: 'main' }">Main Menu</router-link>
         <router-link class="btn--nav" :to="{ name: 'search' }">Search</router-link>
-        <router-link class="btn--nav" :to="{ name: 'family-recipes' }">Family Recipes</router-link>
-        <router-link class="btn--nav" :to="{ name: 'create-recipe' }">Add a Recipe</router-link>
         <router-link class="btn--nav" :to="{ name: 'about' }">About</router-link>
 
         <div v-if="!store?.username" class="guest-links">
@@ -14,6 +12,7 @@
         </div>
 
         <div v-else class="user-info">
+          <router-link class="btn--nav" :to="{ name: 'create-recipe' }">Add a Recipe</router-link>
           <span>{{ store.username }}:</span>
           <BaseButton type="nav" @click="logout">Logout</BaseButton>
           <PersonalMenu />

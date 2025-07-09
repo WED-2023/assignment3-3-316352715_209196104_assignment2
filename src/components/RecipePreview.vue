@@ -1,9 +1,15 @@
 <template>
   <div
-    class="card recipe-card"
+    class="card recipe-card position-relative"
     :class="{ viewed: hasBeenViewed }"
     @click="goToRecipe"
   >
+    <!-- viewed badge -->
+    <span v-if="hasBeenViewed" class="viewed-badge d-flex align-items-center gap-1">
+      <i class="fas fa-eye"></i>
+      נצפה
+    </span>
+
     <img
       :src="recipe.image"
       alt="Recipe image"
@@ -15,86 +21,81 @@
       <p class="card-text">{{ recipe.readyInMinutes }} minutes</p>
       <p class="card-text">{{ recipe.popularity }} likes</p>
 
-  <div class="diet-tags">
-  <span :class="['tag', recipe.isVegan ? 'yes' : 'no']">
-    {{ recipe.isVegan ? '✔ Vegan' : '✖ Vegan' }}
-  </span>
-  <span :class="['tag', recipe.isVegetarian ? 'yes' : 'no']">
-    {{ recipe.isVegetarian ? '✔ Vegetarian' : '✖ Vegetarian' }}
-  </span>
-  <span :class="['tag', recipe.isGlutenFree ? 'yes' : 'no']">
-    {{ recipe.isGlutenFree ? '✔ Gluten-Free' : '✖ Contains Gluten' }}
-  </span>
-</div>
-
+      <div class="diet-tags">
+        <span :class="['tag', recipe.isVegan ? 'yes' : 'no']">
+          {{ recipe.isVegan ? '✔ Vegan' : '✖ Vegan' }}
+        </span>
+        <span :class="['tag', recipe.isVegetarian ? 'yes' : 'no']">
+          {{ recipe.isVegetarian ? '✔ Vegetarian' : '✖ Vegetarian' }}
+        </span>
+        <span :class="['tag', recipe.isGlutenFree ? 'yes' : 'no']">
+          {{ recipe.isGlutenFree ? '✔ Gluten‑Free' : '✖ Contains Gluten' }}
+        </span>
+      </div>
 
       <BaseButton :type="liked ? 'liked' : 'outline'" @click.stop="toggleFavorite">
-        <i :class="[liked ? 'fas' : 'far', 'fa-heart', 'heart-icon', { bounce: animate }]"></i>
+        <i :class="[liked ? 'fas' : 'far', 'fa-heart', 'heart-icon', { bounce: animate }]" />
       </BaseButton>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
 import BaseButton from '@/components/BaseButton.vue';
+import axios from 'axios';
+
 
 export default {
-  name: "RecipePreview",
+  name: 'RecipePreview',
   components: { BaseButton },
   props: {
     recipe: { type: Object, required: true },
-    favorites: { type: Array, default: null }
+    favorites: { type: Array, default: () => [] },
+    viewedIds: { type: Array, default: () => [] }
   },
   data() {
-    return {
-      animate: false
-    };
+    return { animate: false };
   },
   computed: {
     liked() {
       const id = String(this.recipe.recipe_id || this.recipe.id);
-      return this.favorites?.includes(id);
+      return this.favorites.includes(id);
     },
     hasBeenViewed() {
-      const id = this.recipe.recipe_id || this.recipe.id;
-      return sessionStorage.getItem(`viewed_${id}`) === 'true';
+      const id = String(this.recipe.recipe_id || this.recipe.id);
+      return this.viewedIds.includes(id);
     },
     formattedName() {
       if (!this.recipe.title) return '';
       return this.recipe.title
         .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
     }
   },
   methods: {
     goToRecipe() {
       const id = this.recipe.recipe_id || this.recipe.id;
-      sessionStorage.setItem(`viewed_${id}`, 'true');
-      this.$router.push({ name: "recipe", params: { recipeId: id } });
+      this.$router.push({ name: 'recipe', params: { recipeId: id } });
     },
     async toggleFavorite() {
-      const recipeId = this.recipe.recipe_id || this.recipe.id;
-      try {
-        if (this.liked) {
-          await axios.delete(`/users/favorites/${recipeId}`, { withCredentials: true });
-          this.$emit('favorite-toggled', { id: recipeId, liked: false });
-        } else {
-          await axios.post('/users/favorites', { recipeId }, { withCredentials: true });
-          this.animate = true;
-          setTimeout(() => this.animate = false, 300);
-          this.$emit('favorite-toggled', { id: recipeId, liked: true });
-        }
-      } catch (error) {
-        if (error.response?.status === 401) {
-          alert("You must be logged in to manage favorites.");
-        } else {
-          console.error("Failed to toggle favorite:", error);
-          alert("Something went wrong. Try again later.");
-        }
-      }
+  const id = this.recipe.recipe_id || this.recipe.id;
+  try {
+    if (this.liked) {
+      await axios.delete(`/users/favorites/${id}`, { withCredentials: true });
+      this.$emit('favorite-toggled', { id, liked: false });
+    } else {
+      await axios.post('/users/favorites', { recipeId: id }, { withCredentials: true });
+      this.animate = true;
+      setTimeout(() => (this.animate = false), 300);
+      this.$emit('favorite-toggled', { id, liked: true });
     }
+  } catch (err) {
+    console.error('Favorite toggle failed:', err);
+    alert('פעולה נכשלה, נסה שוב.');
+  }
+}
+
   }
 };
 </script>
@@ -106,6 +107,19 @@ export default {
   border-radius: 10px;
 }
 
+.viewed-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #3f51b5;
+  color: #fff;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
 .heart-icon {
   transition: transform 0.2s ease;
 }
@@ -115,8 +129,8 @@ export default {
 }
 
 @keyframes bounce-heart {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.3); }
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
   100% { transform: scale(1); }
 }
 
@@ -124,16 +138,16 @@ export default {
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-
 .card.recipe-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   background-color: #fef7f7;
 }
-
-.card.recipe-card button {
-  cursor: default;
+.card.recipe-card.viewed {
+  border: 2px solid #3f51b5;
+  background-color: #e8eaf6;
 }
+
 .diet-tags {
   display: flex;
   justify-content: center;
@@ -141,23 +155,15 @@ export default {
   gap: 0.4rem;
   margin: 0.5rem 0;
 }
-
 .tag {
   font-size: 0.75rem;
   padding: 0.3rem 0.75rem;
   border-radius: 999px;
   font-weight: 600;
-  color: white;
+  color: #fff;
   min-width: 110px;
   text-align: center;
 }
-
-.yes {
-  background-color: #4caf50; /* ירוק חיובי */
-}
-
-.no {
-  background-color: #9e9e9e; /* אפור ניטרלי */
-}
-
+.yes { background-color: #4caf50; }
+.no { background-color: #9e9e9e; }
 </style>

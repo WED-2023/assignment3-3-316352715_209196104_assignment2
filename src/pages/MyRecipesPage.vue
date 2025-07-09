@@ -1,6 +1,6 @@
 <template>
   <div class="container mt-4">
-    <h1 class="text-center mb-4">❤️ Your Favorite Recipes</h1>
+    <h1 class="text-center mb-4">👨‍🍳 Your Recipes</h1>
 
     <div v-if="loading" class="text-center my-5">
       <div class="spinner-border text-primary" role="status">
@@ -9,15 +9,15 @@
     </div>
 
     <div v-else-if="recipes.length === 0" class="empty-message text-center text-muted my-5">
-      <i class="fas fa-heart-broken fa-2x mb-2"></i>
-      <p>You haven’t favorited any recipes yet.</p>
+      <i class="fas fa-utensils fa-2x mb-2"></i>
+      <p>You haven’t created any recipes yet.</p>
     </div>
 
     <div v-else class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
       <div class="col" v-for="r in recipes" :key="r.recipe_id || r.id">
         <RecipePreview
           :recipe="r"
-          :favorites="favoriteIds.map(f => String(f.recipe_id || f.id))"
+          :favorites="favoriteIds"
           :viewed-ids="viewedIds"
           @favorite-toggled="handleFavoriteToggle"
         />
@@ -32,7 +32,7 @@ import axios from 'axios';
 import RecipePreview from '@/components/RecipePreview.vue';
 
 export default defineComponent({
-  name: "FavoriteRecipesPage",
+  name: "MyRecipesPage",
   components: { RecipePreview },
   setup() {
     const recipes = ref([]);
@@ -40,30 +40,21 @@ export default defineComponent({
     const viewedIds = ref([]);
     const loading = ref(true);
 
-    const loadFavorites = async () => {
+    const loadMyRecipes = async () => {
       try {
-        const { data: ids } = await axios.get('/users/favorites', { withCredentials: true });
-        favoriteIds.value = ids;
+        const [myRes, favRes, viewedRes] = await Promise.all([
+          axios.get('/recipes/myRecipes', { withCredentials: true }),
+          axios.get('/users/favorites', { withCredentials: true }),
+          axios.get('/recipes/viewed/ids', { withCredentials: true })
+        ]);
 
-        const recipeResponses = await Promise.all(
-          ids.map(({ id, recipe_id }) =>
-            axios.get(`/recipes/${recipe_id || id}`, { withCredentials: true })
-          )
-        );
-
-        recipes.value = recipeResponses.map(res => res.data);
+        recipes.value = myRes.data;
+        favoriteIds.value = favRes.data.map(r => String(r.recipe_id || r.id));
+        viewedIds.value = viewedRes.data.map(String);
       } catch (err) {
-        console.error('Error loading favorite recipes:', err);
-      }
-    };
-
-    const fetchViewedIds = async () => {
-      try {
-        const res = await axios.get('/recipes/viewed/ids', { withCredentials: true });
-        viewedIds.value = res.data.map(id => String(id));
-      } catch (err) {
-        console.warn("Could not load viewed recipes");
-        viewedIds.value = [];
+        console.error('Error loading my recipes:', err);
+      } finally {
+        loading.value = false;
       }
     };
 
@@ -74,16 +65,10 @@ export default defineComponent({
         favoriteIds.value.push(strId);
       } else if (!liked && favoriteIds.value.includes(strId)) {
         favoriteIds.value = favoriteIds.value.filter(f => f !== strId);
-        recipes.value = recipes.value.filter(r =>
-          String(r.recipe_id || r.id) !== strId
-        );
       }
     };
 
-    onMounted(async () => {
-      await Promise.all([loadFavorites(), fetchViewedIds()]);
-      loading.value = false;
-    });
+    onMounted(loadMyRecipes);
 
     return {
       recipes,

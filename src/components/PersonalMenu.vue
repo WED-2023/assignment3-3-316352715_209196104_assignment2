@@ -9,8 +9,12 @@
         <router-link to="/favorites">Favorites</router-link>
       </li>
       <li>
-        <router-link to="/private">Private Recipes</router-link>
+        <router-link to="/recipes/myRecipes">Your Recipes</router-link>
       </li>
+      <li>
+        <router-link to="/recipes/family-recipes">Family Recipes</router-link>
+      </li>
+
 
     </ul>
   </div>
