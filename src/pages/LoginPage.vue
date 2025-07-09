@@ -6,11 +6,11 @@
           <input
             v-model="state.username"
             type="text"
-            placeholder="שם משתמש"
+            placeholder="Username"
             class="form-input"
           />
           <div v-if="v$.username.$dirty && v$.username.$error" class="text-danger">
-            יש להזין שם משתמש
+            Username is required
           </div>
         </div>
 
@@ -18,7 +18,7 @@
           <input
             v-model="state.password"
             :type="showPassword ? 'text' : 'password'"
-            placeholder="סיסמה"
+            placeholder="Password"
             class="form-input"
           />
           <div
@@ -26,9 +26,9 @@
             @click="showPassword = !showPassword"
           ></div>
           <div v-if="v$.password.$dirty && v$.password.$error" class="text-danger">
-            <span v-if="v$.password.$errors.find(e => e.$validator === 'required')">שדה חובה</span>
+            <span v-if="v$.password.$errors.find(e => e.$validator === 'required')">Field is required</span>
             <span v-if="v$.password.$errors.find(e => e.$validator === 'minLength')">
-              סיסמה חייבת להכיל לפחות 6 תווים
+              Password must be at least 6 characters long
             </span>
           </div>
         </div>
@@ -37,23 +37,26 @@
           {{ alreadyLoggedInMessage }}
         </div>
 
-        <BaseButton type="login" htmlType="submit" class="mt-2">התחבר</BaseButton>
+        <BaseButton type="login" htmlType="submit" class="mt-2">Login</BaseButton>
 
         <div v-if="loginSuccess" class="text-success" style="margin-top:0.5rem;">
-          התחברת בהצלחה!
+          Logged in successfully!
         </div>
         <div v-if="loginFailed" class="text-danger" style="margin-top:0.5rem;">
-          ⚠️ {{ serverError || 'התחברות נכשלה. נסה שוב.' }}
+          ⚠️ {{ serverError || 'Something went wrong. Try again' }}
         </div>
       </form>
 
       <div v-else class="already-logged-in-message">
-        {{ alreadyLoggedInMessage || 'כבר התחברת למערכת' }}
+        {{ alreadyLoggedInMessage || 'You are already logged in' }}
       </div>
 
-          <BaseButton type="link" @click="$emit('toggle-auth')">
-      אין לך חשבון? הירשם
-    </BaseButton>
+      <p>
+        Don't have an account?
+        <BaseButton type="link" @click="$emit('toggle-auth')">
+          Sign up
+        </BaseButton>
+      </p>
 
     </template>
   </FormWrapper>
@@ -112,7 +115,7 @@ export default {
             loginSuccess.value = true;
             setTimeout(() => router.push('/'), 1500);
           } else {
-            serverError.value = `התחברות נכשלה – סטטוס לא צפוי (${response.status})`;
+            serverError.value = `Login failed – unexpected status (${response.status})`;
             loginFailed.value = true;
             setTimeout(() => loginFailed.value = false, 3000);
           }
@@ -123,13 +126,13 @@ export default {
           const backendMessage = (err.response?.data?.message || '').toLowerCase();
 
           if (status === 401) {
-            serverError.value = 'שם המשתמש או הסיסמה שגויים';
+            serverError.value = 'Incorrect username or password';
           } else if (status === 500) {
-            serverError.value = 'שגיאת שרת – נסה שוב מאוחר יותר';
+            serverError.value = 'Server error – please try again later';
           } else if (backendMessage) {
             serverError.value = backendMessage;
           } else {
-            serverError.value = `שגיאה לא ידועה (${status || '??'})`;
+            serverError.value = `Unknown error (${status || '??'})`;
           }
 
           loginFailed.value = true;
@@ -137,23 +140,23 @@ export default {
         }
       }
     };
-onMounted(async () => {
-  try {
-    const res = await proxy.axios.get('/users/me');
-    if (res.status === 200 && res.data?.username) {
-      isLoggedIn.value = true;
-      alreadyLoggedInMessage.value = `כבר התחברת בתור ${res.data.username}`;
 
-      proxy.store.login(res.data.username);
-      setTimeout(() => router.push('/'), 2000);
-    }
-  } catch (err) {
-    console.debug("User is not logged in yet");
-  } finally {
-    checkedLogin.value = true;
-  }
-});
+    onMounted(async () => {
+      try {
+        const res = await proxy.axios.get('/users/me');
+        if (res.status === 200 && res.data?.username) {
+          isLoggedIn.value = true;
+          alreadyLoggedInMessage.value = `Already logged in as ${res.data.username}`;
 
+          proxy.store.login(res.data.username);
+          setTimeout(() => router.push('/'), 2000);
+        }
+      } catch (err) {
+        console.debug("User is not logged in yet");
+      } finally {
+        checkedLogin.value = true;
+      }
+    });
 
     expose({ login });
 
@@ -189,7 +192,7 @@ onMounted(async () => {
   font-size: 0.9rem;
   margin-top: -0.5rem;
   margin-bottom: 0.75rem;
-  text-align: right;
+  text-align: left;
 }
 
 .password-wrapper {
@@ -262,21 +265,19 @@ onMounted(async () => {
   color: #007bff;
   font-size: 0.9rem;
   margin-bottom: 0.75rem;
-  text-align: right;
+  text-align: left;
 }
 
 .text-success {
   color: #28a745;
   font-size: 0.9rem;
   text-align: center;
-  
 }
 
 .text-fail {
   color: red;
   font-size: 0.9rem;
   text-align: center;
-  
 }
 
 .already-logged-in-message {
@@ -289,10 +290,4 @@ onMounted(async () => {
   border-radius: 8px;
   border: 1px solid #b4e0cb;
 }
-
-
-
-
-
-
 </style>

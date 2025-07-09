@@ -1,78 +1,85 @@
 <template>
   <div class="container py-4">
-    <h2 class="mb-3 text-end fw-bold text-primary">חיפוש מתכונים</h2>
+    <h2 class="mb-3 fw-bold text-primary text-start">Search Recipes</h2>
 
+    <!-- ───────────── Search Form ───────────── -->
     <form @submit.prevent="search" class="mb-4">
       <div class="row g-4">
-        <div class="col-md-4 text-end">
-          <label class="form-label">שם מתכון</label>
+        <!-- Recipe Name -->
+        <div class="col-md-4">
+          <label class="form-label">Recipe Name</label>
           <input
             v-model="query"
             type="text"
             class="form-control"
-            placeholder="חפש לפי שם..."
-            dir="rtl"
+            placeholder="Search by name..."
           />
         </div>
 
-        <div class="col-md-2 text-end">
-          <label class="form-label">כמות תוצאות</label>
-          <select v-model="number" class="form-select" dir="rtl">
+        <!-- Results Count -->
+        <div class="col-md-2">
+          <label class="form-label">Results</label>
+          <select v-model="number" class="form-select">
             <option :value="5">5</option>
             <option :value="10">10</option>
             <option :value="15">15</option>
           </select>
         </div>
 
-        <div class="col-md-2 text-end">
-          <label class="form-label">סוג מטבח</label>
-          <select v-model="cuisine" class="form-select" dir="rtl">
-            <option value="">ללא סינון</option>
-            <option value="italian">איטלקי</option>
-            <option value="mexican">מקסיקני</option>
-            <option value="chinese">סיני</option>
+        <!-- Cuisine -->
+        <div class="col-md-2">
+          <label class="form-label">Cuisine</label>
+          <select v-model="cuisine" class="form-select">
+            <option value="">Any</option>
+            <option value="italian">Italian</option>
+            <option value="mexican">Mexican</option>
+            <option value="chinese">Chinese</option>
           </select>
         </div>
 
-        <div class="col-md-2 text-end">
-          <label class="form-label">דיאטה</label>
-          <select v-model="diet" class="form-select" dir="rtl">
-            <option value="">ללא סינון</option>
-            <option value="vegan">טבעוני</option>
-            <option value="vegetarian">צמחוני</option>
-            <option value="gluten free">ללא גלוטן</option>
+        <!-- Diet -->
+        <div class="col-md-2">
+          <label class="form-label">Diet</label>
+          <select v-model="diet" class="form-select">
+            <option value="">Any</option>
+            <option value="vegan">Vegan</option>
+            <option value="vegetarian">Vegetarian</option>
+            <option value="gluten free">Gluten‑Free</option>
           </select>
         </div>
 
-        <div class="col-md-2 text-end">
-          <label class="form-label">מיין לפי</label>
-          <select v-model="sort" class="form-select" dir="rtl">
-            <option value="">ללא מיון</option>
-            <option value="popularity">פופולריות</option>
-            <option value="time">זמן הכנה</option>
+        <!-- Sort -->
+        <div class="col-md-2">
+          <label class="form-label">Sort by</label>
+          <select v-model="sort" class="form-select">
+            <option value="">None</option>
+            <option value="popularity">Popularity</option>
+            <option value="time">Prep Time</option>
           </select>
         </div>
 
+        <!-- Submit -->
         <div class="col-12 text-end mt-2">
           <button type="submit" class="btn btn-outline-success px-4 py-2 fs-5 fw-bold">
-            <i class="fas fa-search ms-2"></i> חפש
+            <i class="fas fa-search me-2"></i> Search
           </button>
         </div>
       </div>
     </form>
 
+    <!-- ───────────── Results ───────────── -->
     <RecipePreviewList
       v-if="results.length"
       :recipes="results"
       :favorites="favorites"
       :viewed-ids="viewedIds"
       :sort-by="sort"
-      title="תוצאות חיפוש"
+      title="Search Results"
       @favorite-toggled="handleFavoriteToggle"
     />
 
     <div v-else-if="hasSearched" class="text-center text-muted mt-5">
-      <p>לא נמצאו תוצאות.</p>
+      <p>No results found.</p>
     </div>
   </div>
 </template>
@@ -106,12 +113,14 @@ export default {
           cuisine: this.cuisine,
           diet: this.diet,
           sortBy: this.sort === 'time' ? undefined : this.sort,
-          order: 'desc',
+          order: 'desc'
         };
+
         this.results = [];
         const { data } = await axios.get('/recipes/', { params });
         this.results = data;
         this.hasSearched = true;
+
         localStorage.setItem('lastSearch', JSON.stringify(params));
       } catch (err) {
         console.error('Search failed:', err);
@@ -129,20 +138,22 @@ export default {
     }
   },
   async mounted() {
+    // Restore last search (if any)
     const last = localStorage.getItem('lastSearch');
     if (last) {
       Object.assign(this.$data, JSON.parse(last));
       this.search();
     }
 
+    // Load favorites + viewed IDs (if logged in)
     try {
-      const res1 = await axios.get('/users/favorites', { withCredentials: true });
-      this.favorites = res1.data.map(f => String(f.recipe_id || f.id));
+      const favRes = await axios.get('/users/favorites', { withCredentials: true });
+      this.favorites = favRes.data.map(f => String(f.recipe_id || f.id));
 
-      const res2 = await axios.get('/recipes/viewed/ids', { withCredentials: true });
-      this.viewedIds = res2.data.map(String);
+      const viewedRes = await axios.get('/recipes/viewed/ids', { withCredentials: true });
+      this.viewedIds = viewedRes.data.map(String);
     } catch (err) {
-      console.warn('Failed to load favorites/viewed:', err);
+      console.warn('Could not load favorites/viewed IDs:', err);
     }
   }
 };
@@ -151,6 +162,6 @@ export default {
 <style scoped>
 input.form-control,
 select.form-select {
-  text-align: right;
+  text-align: left;
 }
 </style>

@@ -103,14 +103,19 @@ export default {
     }
   },
   async mounted() {
-    try {
-      const response = await axios.get(`/recipes/${this.recipeId}`);
-      this.recipe = response.data;
-      console.log("the recipe: ", this.recipe);
-    } catch (err) {
-      console.error('Failed to fetch recipe:', err);
-    }
+  try {
+    const response = await axios.get(`/recipes/${this.recipeId}`, { withCredentials: true });
+    this.recipe = response.data;
+
+    axios.post(`/recipes/viewed/${this.recipeId}`, {}, { withCredentials: true })
+         .catch(() => {}); // לא מציק אם נכשל (למשל אם לא מחובר)
+
+    console.log("the recipe: ", this.recipe);
+  } catch (err) {
+    console.error('Failed to fetch recipe:', err);
   }
+}
+
 };
 </script>
 

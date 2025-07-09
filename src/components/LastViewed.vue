@@ -1,6 +1,6 @@
 <template>
   <div class="last-viewed-recipes">
-    <h3 class="section-title">מתכונים אחרונים שצפית בהם</h3>
+    <h3 class="section-title">Recently Viewed Recipes -</h3>
     <div v-if="recipes.length > 0" class="recipes-list">
       <RecipePreview
         v-for="recipe in recipes"

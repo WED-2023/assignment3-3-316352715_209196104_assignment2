@@ -21,20 +21,20 @@
 
     <div class="right-column">
       <template v-if="store.username">
-         <LastViewed
-            :favorites="favorites"
-            :viewed-ids="viewedIds"
-            @favorite-toggled="handleFavoriteToggle"
-          />
-
-        <button class="logout-button" @click="logout">התנתק</button>
+        <LastViewed
+          :favorites="favorites"
+          :viewed-ids="viewedIds"
+          @favorite-toggled="handleFavoriteToggle"
+        />
+        <button class="logout-button" @click="logout">Logout</button>
       </template>
 
       <template v-else-if="checkedLogin">
         <div class="auth-box">
-          <h2 class="welcome-message">
-            היי! שמחים שבאת. איך נוח לך להתחיל?
-          </h2>
+<h2 class="welcome-message">
+  Welcome! How do you want to start?
+</h2>
+
           <LoginPage v-if="!isRegistering" @toggle-auth="toggleAuthMode" />
           <RegisterPage v-else @toggle-auth="toggleAuthMode" />
         </div>
@@ -62,18 +62,15 @@ export default {
     RegisterPage,
   },
   setup() {
-    /* ─────────────────── Reactive state ─────────────────── */
     const randomRecipes = ref([]);
     const favorites     = ref([]);
     const viewedIds     = ref([]);
     const checkedLogin  = ref(false);
     const isRegistering = ref(false);
 
-    /* ─────────────────── Store (global) ─────────────────── */
     const { appContext } = getCurrentInstance();
     const store = appContext.config.globalProperties.store;
 
-    /* ─────────────────── Auth helpers ───────────────────── */
     const toggleAuthMode = () => (isRegistering.value = !isRegistering.value);
 
     const logout = async () => {
@@ -86,7 +83,6 @@ export default {
       }
     };
 
-    /* ─────────────────── Data fetchers ──────────────────── */
     const fetchRecipes = async () => {
       const { data } = await axios.get('/recipes/random');
       randomRecipes.value = data;
@@ -115,7 +111,6 @@ export default {
       }
     };
 
-    /* ────────────────── Event handlers ──────────────────── */
     const handleFavoriteToggle = ({ id, liked }) => {
       const strId = String(id);
       if (liked && !favorites.value.includes(strId)) {
@@ -127,18 +122,18 @@ export default {
 
     const loadMoreRecipes = fetchRecipes;
 
-    /* ───────────────────── Lifecycle ────────────────────── */
-    onMounted(async () => {
-      await checkLogin();
-      if (store.username) {
-        await Promise.all([fetchFavorites(), fetchViewedIds()]);
-      } else {
-        await fetchViewedIds();   // גם אורחים רואים נצפים גלובליים / אחרונים
-      }
-      await fetchRecipes();
-    });
+  onMounted(async () => {
+  await fetchRecipes(); 
 
-    /* ─────────────────── expose to template ─────────────── */
+  await checkLogin();
+
+  if (store.username) {
+    await Promise.all([fetchFavorites(), fetchViewedIds()]);
+  } else {
+    await fetchViewedIds();
+  }
+});
+
     return {
       randomRecipes,
       favorites,
@@ -151,7 +146,7 @@ export default {
       handleFavoriteToggle,
       loadMoreRecipes,
     };
-  },
+  }
 };
 </script>
 

@@ -3,7 +3,7 @@
     <b-row align-h="center">
       <b-col cols="12" md="10" lg="8">
         <b-card class="text-center shadow-lg border-0 rounded-4 p-4">
-          <h2 class="mb-3 display-6 fw-bold">יצירת מתכון חדש</h2>
+          <h2 class="mb-3 display-6 fw-bold">Add a New Recipe</h2>
           <b-button
             size="lg"
             variant="outline-primary"
@@ -11,7 +11,7 @@
             @click="showModal = true"
           >
             <i class="fas fa-plus-circle"></i>
-            <span>פתח טופס יצירת מתכון</span>
+            <span>Let's do it</span>
           </b-button>
 
 
@@ -53,7 +53,7 @@ export default defineComponent({
 
     // Handler for a successful recipe creation
     function onRecipeCreated() {
-      successMessage.value = 'המתכון נשמר בהצלחה!';
+      successMessage.value = 'The Recipe Saved Succesfully!';
       showModal.value = false;
       // Clear the message after 4 seconds
       setTimeout(() => {

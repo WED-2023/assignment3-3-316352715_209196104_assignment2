@@ -7,7 +7,7 @@
     <!-- viewed badge -->
     <span v-if="hasBeenViewed" class="viewed-badge d-flex align-items-center gap-1">
       <i class="fas fa-eye"></i>
-      נצפה
+      Viewed
     </span>
 
     <img
