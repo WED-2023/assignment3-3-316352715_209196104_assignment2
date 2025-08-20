@@ -1,6 +1,6 @@
 <template>
   <div class="search-results">
-    <div v-if="recipes.length === 0" class="no-results">
+    <div v-if="(recipes?.length ?? 0) === 0" class="no-results">
       לא נמצאו תוצאות רלוונטיות.
     </div>
     <div v-else class="row">
@@ -24,21 +24,41 @@ export default {
   props: {
     recipes: {
       type: Array,
-      default: () => [],
-      required: true
+      default: () => [] // remove "required: true" if you keep a default
     },
     sortBy: {
       type: String,
-      default: "popularity" 
+      default: "popularity" // "", "popularity", "time", or "readyInMinutes"
     }
   },
   computed: {
     sortedRecipes() {
-      if (this.sortBy === "readyInMinutes") {
-        return [...this.recipes].sort((a, b) => a.readyInMinutes - b.readyInMinutes);
+      // map external values to internal keys
+      const sortKey = this.sortBy === "time" ? "readyInMinutes" : this.sortBy;
+
+      // no sort
+      if (!sortKey) return [...this.recipes];
+
+      // sort by time (ascending)
+      if (sortKey === "readyInMinutes") {
+        return [...this.recipes].sort((a, b) => {
+          const av = Number(a.readyInMinutes ?? Number.POSITIVE_INFINITY);
+          const bv = Number(b.readyInMinutes ?? Number.POSITIVE_INFINITY);
+          return av - bv;
+        });
       }
-      // default: sort by popularity
-      return [...this.recipes].sort((a, b) => b.popularity - a.popularity);
+
+      // default: popularity (descending)
+      if (sortKey === "popularity") {
+        return [...this.recipes].sort((a, b) => {
+          const av = Number(a.popularity ?? Number.NEGATIVE_INFINITY);
+          const bv = Number(b.popularity ?? Number.NEGATIVE_INFINITY);
+          return bv - av;
+        });
+      }
+
+      // unknown sort key -> no sort
+      return [...this.recipes];
     }
   }
 };

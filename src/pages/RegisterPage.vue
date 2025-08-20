@@ -15,11 +15,20 @@
 
       <!-- Username -->
       <div class="form-group">
-        <input v-model="state.username" type="text" placeholder="Username" class="form-input" />
+        <input
+          v-model="state.username"
+          @input="sanitizeUsername"
+          type="text"
+          placeholder="Username"
+          class="form-input"
+          autocomplete="username"
+          maxlength="8"
+        />
         <div v-if="v$.username.$error" class="text-danger">
           <span v-if="v$.username.$errors.find(e => e.$validator === 'required')">This field is required</span>
           <span v-else-if="v$.username.$errors.find(e => e.$validator === 'minLength')">At least 3 characters</span>
           <span v-else-if="v$.username.$errors.find(e => e.$validator === 'maxLength')">Max 8 characters</span>
+          <span v-else-if="v$.username.$errors.find(e => e.$validator === 'englishLettersOnly')">English letters only</span>
         </div>
       </div>
 
@@ -74,7 +83,7 @@
         <div v-if="v$.country.$error" class="text-danger">This field is required</div>
       </div>
 
-      <!-- Server‑side error -->
+      <!-- Server-side error -->
       <div v-if="serverError" class="text-danger">{{ serverError }}</div>
 
       <!-- Submit -->
@@ -92,7 +101,7 @@
 <script>
 import { reactive, onMounted, nextTick, ref, computed, getCurrentInstance } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
-import { required, minLength, maxLength, email, sameAs } from '@vuelidate/validators';
+import { required, minLength, maxLength, email, sameAs, helpers } from '@vuelidate/validators';
 import FormWrapper from '@/components/FormWrapper.vue';
 import countries from '@/assets/countries.json';
 import { useRouter } from 'vue-router';
@@ -121,8 +130,22 @@ export default {
 
     const passwordValue = computed(() => state.password);
 
+   
+    const englishLettersOnly = helpers.withMessage(
+      'English letters only',
+      (value) => {
+        if (!value) return true; 
+        return /^[a-zA-Z]+$/.test(value);
+      }
+    );
+
     const rules = {
-      username: { required, minLength: minLength(3), maxLength: maxLength(8) },
+      username: { 
+        required, 
+        minLength: minLength(3), 
+        maxLength: maxLength(8), 
+        englishLettersOnly 
+      },
       firstName: { required },
       lastName: { required },
       email: { required, email },
@@ -131,10 +154,19 @@ export default {
         required,
         minLength: minLength(5),
         maxLength: maxLength(10),
-        hasNumber: v => /\d/.test(v) || 'Password must contain a number',
-        hasSpecialChar: v => /[!@#$%^&*(),.?":{}|<>]/.test(v) || 'Password must contain a special character'
+        hasNumber: helpers.withMessage(
+          'Password must contain a number',
+          (value) => !value || /\d/.test(value)
+        ),
+        hasSpecialChar: helpers.withMessage(
+          'Password must contain a special character',
+          (value) => !value || /[!@#$%^&*(),.?":{}|<>]/.test(value)
+        )
       },
-      confirmPassword: { required, sameAsPassword: sameAs(passwordValue, 'Passwords do not match') }
+      confirmPassword: { 
+        required, 
+        sameAsPassword: sameAs(passwordValue, 'Passwords do not match') 
+      }
     };
 
     const v$ = useVuelidate(rules, state);
@@ -142,6 +174,15 @@ export default {
     onMounted(() => {
       state.countries = countries.map(c => c.name);
     });
+
+ 
+    const sanitizeUsername = () => {
+   
+      const cleaned = (state.username || '').replace(/[^a-zA-Z]/g, '').slice(0, 8);
+      if (cleaned !== state.username) {
+        state.username = cleaned;
+      }
+    };
 
     const register = async () => {
       serverError.value = '';
@@ -159,19 +200,36 @@ export default {
           password: state.password
         });
 
-        if (res.status === 201) router.push('/login');
-        else serverError.value = 'Registration failed – unexpected status';
+        if (res.status === 201) {
+          router.push('/login');
+        } else {
+          serverError.value = 'Registration failed – unexpected status';
+        }
       } catch (err) {
         const msg = (err.response?.data?.message || '').toLowerCase();
         const status = err.response?.status || '';
-        if (status === 409 && msg.includes('username')) serverError.value = 'Username already exists';
-        else if (status === 409 && msg.includes('email')) serverError.value = 'Email already registered';
-        else if (status === 400) serverError.value = err.response?.data?.errors?.[0]?.msg || 'Invalid registration data';
-        else serverError.value = `Unexpected error (${status}). Please try again`;
+        
+        if (status === 409 && msg.includes('username')) {
+          serverError.value = 'Username already exists';
+        } else if (status === 409 && msg.includes('email')) {
+          serverError.value = 'Email already registered';
+        } else if (status === 400) {
+          serverError.value = err.response?.data?.errors?.[0]?.msg || 'Invalid registration data';
+        } else {
+          serverError.value = `Unexpected error (${status}). Please try again`;
+        }
       }
     };
 
-    return { state, v$, register, showPassword, showConfirmPassword, serverError };
+    return { 
+      state, 
+      v$, 
+      register, 
+      showPassword, 
+      showConfirmPassword, 
+      serverError, 
+      sanitizeUsername 
+    };
   }
 };
 </script>
@@ -186,14 +244,22 @@ export default {
   font-size: 16px;
   box-sizing: border-box;
 }
+
 .text-danger {
   color: #dc3545;
   font-size: 0.9rem;
   margin-bottom: 0.75rem;
   text-align: left;
 }
-.form-group { margin-bottom: 1rem; }
-.password-wrapper { position: relative; }
+
+.form-group { 
+  margin-bottom: 1rem; 
+}
+
+.password-wrapper { 
+  position: relative; 
+}
+
 .toggle-password-icon {
   position: absolute;
   top: 50%;
@@ -204,10 +270,53 @@ export default {
   height: 20px;
   transition: opacity 0.2s;
 }
-.toggle-password-icon:hover { opacity: 0.7; }
-/* eye icons (same as before) */
-.eye::before { content: ''; position: absolute; width: 18px; height: 12px; border: 2px solid #666; border-radius: 18px; top: 4px; left: 1px; }
-.eye::after  { content: ''; position: absolute; width: 8px; height: 8px; background:#666; border-radius:50%; top:6px; left:6px; }
-.eye-slash::before { content:''; position:absolute; width:18px; height:12px; border:2px solid #999; border-radius:18px; top:4px; left:1px; opacity:0.6; }
-.eye-slash::after  { content:''; position:absolute; width:20px; height:2px; background:#666; top:9px; left:0; transform:rotate(-45deg); }
+
+.toggle-password-icon:hover { 
+  opacity: 0.7; 
+}
+
+.eye::before { 
+  content: ''; 
+  position: absolute; 
+  width: 18px; 
+  height: 12px; 
+  border: 2px solid #666; 
+  border-radius: 18px; 
+  top: 4px; 
+  left: 1px; 
+}
+
+.eye::after { 
+  content: ''; 
+  position: absolute; 
+  width: 8px; 
+  height: 8px; 
+  background: #666; 
+  border-radius: 50%; 
+  top: 6px; 
+  left: 6px; 
+}
+
+.eye-slash::before { 
+  content: ''; 
+  position: absolute; 
+  width: 18px; 
+  height: 12px; 
+  border: 2px solid #999; 
+  border-radius: 18px; 
+  top: 4px; 
+  left: 1px; 
+  opacity: 0.6; 
+}
+
+.eye-slash::after { 
+  content: ''; 
+  position: absolute; 
+  width: 20px; 
+  height: 2px; 
+  background: #666; 
+  top: 9px; 
+  left: 0; 
+  transform: rotate(-45deg); 
+}
 </style>

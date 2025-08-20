@@ -7,7 +7,15 @@
       </BaseButton>
     </div>
 
-    <div class="recipe-header text-center mb-4">
+    <div class="recipe-header text-center mb-4 position-relative">
+      <span
+        v-if="isLoggedIn && viewedBefore"
+        class="viewed-badge d-flex align-items-center gap-1"
+      >
+        <i class="fas fa-eye"></i>
+        Viewed
+      </span>
+
       <h2>{{ recipe.title }}</h2>
       <img :src="recipe.image || recipe.img" alt="Recipe image" class="recipe-image" />
     </div>
@@ -58,19 +66,15 @@ export default {
   name: 'RecipeView',
   components: { BaseButton },
   props: {
-    recipeId: {
-      type: [String, Number],
-      required: true
-    },
-    favorites: {
-      type: Array,
-      default: () => []
-    }
+    recipeId: { type: [String, Number], required: true },
+    favorites: { type: Array, default: () => [] }
   },
   data() {
     return {
       recipe: null,
-      animate: false
+      animate: false,
+      isLoggedIn: false,
+      viewedBefore: false
     };
   },
   computed: {
@@ -89,33 +93,54 @@ export default {
         } else {
           await axios.post('/users/favorites', { recipeId }, { withCredentials: true });
           this.animate = true;
-          setTimeout(() => this.animate = false, 300);
+          setTimeout(() => (this.animate = false), 300);
           this.$emit('favorite-toggled', { id: recipeId, liked: true });
         }
       } catch (error) {
         if (error.response?.status === 401) {
-          alert("You must be logged in to manage favorites.");
+          alert('You must be logged in to manage favorites.');
         } else {
-          console.error("Failed to toggle favorite:", error);
-          alert("Something went wrong. Try again later.");
+          console.error('Failed to toggle favorite:', error);
+          alert('Something went wrong. Try again later.');
         }
       }
     }
   },
   async mounted() {
-  try {
-    const response = await axios.get(`/recipes/${this.recipeId}`, { withCredentials: true });
-    this.recipe = response.data;
+    const idStr = String(this.recipeId);
 
-    axios.post(`/recipes/viewed/${this.recipeId}`, {}, { withCredentials: true })
-         .catch(() => {}); // לא מציק אם נכשל (למשל אם לא מחובר)
+    // 1) Determine login + whether it was viewed BEFORE this visit
+    try {
+      const res = await axios.get('/recipes/viewed/ids', { withCredentials: true });
+      this.isLoggedIn = true;
+      const viewedIds = Array.isArray(res.data) ? res.data.map(String) : [];
+      this.viewedBefore = viewedIds.includes(idStr);
+    } catch (err) {
+      if (err?.response?.status === 401) {
+        this.isLoggedIn = false;
+      } else {
+        console.warn('Could not load viewed IDs:', err);
+      }
+    }
 
-    console.log("the recipe: ", this.recipe);
-  } catch (err) {
-    console.error('Failed to fetch recipe:', err);
+    // 2) Fetch recipe details (independent of login state)
+    try {
+      const response = await axios.get(`/recipes/${this.recipeId}`, { withCredentials: true });
+      this.recipe = response.data;
+    } catch (err) {
+      console.error('Failed to fetch recipe:', err);
+    }
+
+    // 3) Mark as viewed for logged-in users, but do NOT change the badge for this visit
+    if (this.isLoggedIn) {
+      try {
+        await axios.post(`/recipes/viewed/${this.recipeId}`, {}, { withCredentials: true });
+        // intentionally not toggling viewedBefore here
+      } catch {
+        /* noop */
+      }
+    }
   }
-}
-
 };
 </script>
 
@@ -124,6 +149,23 @@ export default {
   max-width: 100%;
   border-radius: 10px;
   margin-bottom: 1rem;
+}
+
+.recipe-header.position-relative {
+  position: relative;
+}
+
+.viewed-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #3f51b5;
+  color: #fff;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .diet-tags {
@@ -144,25 +186,15 @@ export default {
   text-align: center;
 }
 
-.yes {
-  background-color: #4caf50;
-}
+.yes { background-color: #4caf50; }
+.no  { background-color: #9e9e9e; }
 
-.no {
-  background-color: #9e9e9e;
-}
-
-.heart-icon {
-  transition: transform 0.2s ease;
-}
-
-.bounce {
-  animation: bounce-heart 0.3s ease;
-}
+.heart-icon { transition: transform 0.2s ease; }
+.bounce { animation: bounce-heart 0.3s ease; }
 
 @keyframes bounce-heart {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.3); }
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
   100% { transform: scale(1); }
 }
 </style>

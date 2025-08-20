@@ -31,10 +31,7 @@
 
       <template v-else-if="checkedLogin">
         <div class="auth-box">
-<h2 class="welcome-message">
-  Welcome! How do you want to start?
-</h2>
-
+          <h2 class="welcome-message">Welcome! How do you want to start?</h2>
           <LoginPage v-if="!isRegistering" @toggle-auth="toggleAuthMode" />
           <RegisterPage v-else @toggle-auth="toggleAuthMode" />
         </div>
@@ -52,6 +49,8 @@ import LastViewed     from '@/components/LastViewed.vue';
 import BaseButton     from '@/components/BaseButton.vue';
 import LoginPage      from '@/pages/LoginPage.vue';
 import RegisterPage   from '@/pages/RegisterPage.vue';
+
+const STORAGE_KEY = 'lastSearch';
 
 export default {
   components: {
@@ -76,10 +75,12 @@ export default {
     const logout = async () => {
       try {
         await axios.post('/auth/logout', {}, { withCredentials: true });
-        store.logout();
-        window.location.reload();
       } catch (err) {
         console.error('Logout failed:', err);
+      } finally {
+        sessionStorage.removeItem(STORAGE_KEY);
+        store.logout();
+        window.location.reload();
       }
     };
 
@@ -122,17 +123,16 @@ export default {
 
     const loadMoreRecipes = fetchRecipes;
 
-  onMounted(async () => {
-  await fetchRecipes(); 
+    onMounted(async () => {
+      await fetchRecipes();
+      await checkLogin();
 
-  await checkLogin();
-
-  if (store.username) {
-    await Promise.all([fetchFavorites(), fetchViewedIds()]);
-  } else {
-    await fetchViewedIds();
-  }
-});
+      if (store.username) {
+        await Promise.all([fetchFavorites(), fetchViewedIds()]);
+      } else {
+        await fetchViewedIds();
+      }
+    });
 
     return {
       randomRecipes,
